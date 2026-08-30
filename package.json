@@ -1,8 +1,20 @@
 {
   "name": "campus-route-to-art",
   "version": "1.0.0",
-  "private": true,
+  "description": "Gamifies daily campus walking by algorithmically converting GPS routes into collectible digital generative artwork.",
+  "main": "index.html",
   "scripts": {
-    "build": "echo 'Build successful'"
-  }
+    "dev": "npx -y serve .",
+    "start": "npx -y serve .",
+    "build": "echo 'Vercel static build completed successfully'"
+  },
+  "keywords": [
+    "generative-art",
+    "gps-walking",
+    "campus-art",
+    "route-to-art",
+    "interactive-studio"
+  ],
+  "author": "GSNikhil1603",
+  "license": "MIT"
 }
