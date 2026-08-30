@@ -4,9 +4,9 @@
   "description": "Gamifies daily campus walking by algorithmically converting GPS routes into collectible digital generative artwork.",
   "main": "index.html",
   "scripts": {
-    "dev": "npx -y serve .",
-    "start": "npx -y serve .",
-    "build": "echo 'Vercel static build completed successfully'"
+    "dev": "npx -y serve public",
+    "start": "npx -y serve public",
+    "build": "echo 'Build ready'"
   },
   "keywords": [
     "generative-art",

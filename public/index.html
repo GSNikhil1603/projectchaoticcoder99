@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Campus Route-to-Art | Generative GPS Walk Art</title>
+  <meta name="description" content="Gamify your daily campus walks by converting GPS routes into collectible generative digital artwork with interactive watercolor styling, campus maps, quests, and rewards.">
+  <meta name="theme-color" content="#52B788">
+
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app-container" class="app-container">
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-group" id="btn-logo-home">
+          <span class="logo-text">WalkArt</span>
+          <svg class="logo-brush-stroke" viewBox="0 0 90 8" fill="none">
+            <path d="M2 3C25 7 65 7 88 3" stroke="#52B788" stroke-width="4" stroke-linecap="round" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Crystal Wallet Balance -->
+        <div class="crystal-chip" id="btn-crystal-balance" title="Pigment Crystals">
+          <span class="crystal-icon">💎</span>
+          <span class="crystal-count" id="crystal-display">850</span>
+        </div>
+
+        <!-- Walk Streak Chip -->
+        <div class="streak-chip" id="btn-streak-chip" title="Daily Streak">
+          <span class="streak-fire">🔥</span>
+          <span class="streak-days" id="streak-display">7d</span>
+        </div>
+
+        <!-- Profile / Info Button -->
+        <button class="icon-avatar-btn" id="btn-open-profile" aria-label="User Profile">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area with Dynamic Views -->
+    <main class="app-main-content">
+      
+      <!-- ================= 1. HOME VIEW ================= -->
+      <section id="view-home" class="app-view active">
+        <!-- User Greeting -->
+        <div class="greeting-section">
+          <div class="greeting-text">
+            <h1 class="greeting-title" id="home-user-greeting">Hello <span class="username-highlight">Neeraj</span></h1>
+            <p class="greeting-subtitle">Live. Move. Create.</p>
+          </div>
+          <button class="btn-start-walk-pill" id="btn-quick-walk">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>Start Walk</span>
+          </button>
+        </div>
+
+        <!-- Hero Card: Today's Walk Artwork -->
+        <div class="hero-walk-card" id="card-hero-today">
+          <div class="hero-top-row">
+            <div class="hero-metrics">
+              <span class="hero-tag">TODAY'S WALK</span>
+              <div class="step-count-wrapper">
+                <span class="step-number" id="hero-step-count">7,842</span>
+              </div>
+              <span class="step-subtext">steps made into art</span>
+
+              <div class="metric-pills-row">
+                <div class="metric-pill">
+                  <div class="pill-icon-circle distance-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M13 4v16M13 4l-4 4M13 4l4 4M9 20l4-4 4 4"></path>
+                    </svg>
+                  </div>
+                  <div class="pill-values">
+                    <span class="pill-num" id="hero-distance">5.6</span>
+                    <span class="pill-unit">km</span>
+                  </div>
+                </div>
+
+                <div class="metric-pill">
+                  <div class="pill-icon-circle calories-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+                    </svg>
+                  </div>
+                  <div class="pill-values">
+                    <span class="pill-num" id="hero-calories">312</span>
+                    <span class="pill-unit">kcal</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mini Live Canvas Preview -->
+            <div class="hero-canvas-container" id="hero-canvas-preview">
+              <svg id="hero-doodle-svg" class="hero-doodle-svg" viewBox="0 0 400 350">
+                <!-- Watercolor blobs -->
+                <ellipse cx="260" cy="130" rx="90" ry="75" fill="#FBCFE8" fill-opacity="0.8" transform="rotate(25 260 130)" />
+                <ellipse cx="140" cy="240" rx="80" ry="65" fill="#A7F3D0" fill-opacity="0.85" transform="rotate(-15 140 240)" />
+                <ellipse cx="320" cy="230" rx="65" ry="55" fill="#FEF08A" fill-opacity="0.8" transform="rotate(40 320 230)" />
+                <!-- Generative smoothed path -->
+                <path id="hero-vector-path" d="M 100 120 C 60 50 180 30 160 140 C 130 250 50 260 90 320 C 140 380 240 200 220 120 C 200 40 320 60 280 180 C 240 300 360 340 330 200" 
+                      fill="none" stroke="#334155" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <div class="hero-canvas-badge">
+                <span>Customize Art 🎨</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Goal Progress -->
+          <div class="hero-progress-section">
+            <div class="progress-labels">
+              <span class="progress-percent" id="hero-goal-pct">78% of daily goal</span>
+              <span class="progress-target" id="hero-goal-target">10,000 steps</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="hero-goal-fill" style="width: 78.4%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- A Little Cheer For You Section -->
+        <div class="cheer-card">
+          <div class="cheer-header">
+            <h3 class="cheer-section-title">A little cheer for you</h3>
+            <button class="btn-refresh-cheer" id="btn-new-cheer">New line ↺</button>
+          </div>
+          <div class="cheer-body">
+            <p class="cheer-line-1" id="cheer-text-1">You turned every step into a</p>
+            <p class="cheer-line-2" id="cheer-text-2">small work of art.</p>
+          </div>
+          <div class="cheer-footer">
+            <span class="cheer-status-note" id="cheer-subtext">7,842 steps and still moving beautifully.</span>
+            <button class="btn-inspire-pill" id="btn-inspire-me">+ Inspire me</button>
+          </div>
+        </div>
+
+        <!-- Live Campus Pedometer & Hardware Sensor Card -->
+        <div class="pedometer-card">
+          <div class="pedometer-card-header">
+            <div class="pedometer-title-box">
+              <div class="pedometer-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="pedometer-title">Campus Pedometer Sensor</h4>
+                <span class="pedometer-sensor-label" id="pedometer-sensor-name">Continuous Accelerometer & GPS fusion</span>
+              </div>
+            </div>
+            <span class="live-status-badge">
+              <span class="status-dot-pulsing"></span>
+              <span id="pedometer-status-text">Live Active</span>
+            </span>
+          </div>
+
+          <div class="pedometer-stats-grid">
+            <div class="stat-box">
+              <span class="stat-title">Daily Steps</span>
+              <span class="stat-value" id="ped-steps-val">7,842</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-title">Cadence</span>
+              <span class="stat-value teal-highlight" id="ped-cadence-val">114 SPM</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-title">Active Time</span>
+              <span class="stat-value" id="ped-time-val">68 min</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Campus Artworks Carousel / Gallery -->
+        <div class="recent-artworks-section">
+          <div class="section-title-row">
+            <h3 class="section-title">Recent Walk Artworks</h3>
+            <button class="btn-text-link" id="btn-view-all-gallery">View all (8) →</button>
+          </div>
+
+          <div class="artworks-horizontal-scroll" id="home-artworks-carousel">
+            <!-- Dynamic Artwork Cards injected via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 2. LIVE TRACKER & SIMULATOR VIEW ================= -->
+      <section id="view-tracker" class="app-view">
+        <div class="view-header">
+          <h2 class="view-title">Live Route Tracker</h2>
+          <p class="view-description">Track your real-time campus GPS route or test with high-precision route simulation.</p>
+        </div>
+
+        <!-- Live Walk Map & Art Trace Canvas -->
+        <div class="tracker-canvas-card">
+          <div class="tracker-map-overlay-wrapper">
+            <!-- Campus Map Background Canvas -->
+            <canvas id="tracker-map-canvas" width="600" height="420" class="tracker-map-canvas"></canvas>
+            
+            <!-- Live Generative Stroke Canvas -->
+            <canvas id="tracker-art-canvas" width="600" height="420" class="tracker-art-canvas"></canvas>
+          </div>
+
+          <!-- Live Top HUD Stats -->
+          <div class="tracker-hud-overlay">
+            <div class="hud-stat">
+              <span class="hud-label">DISTANCE</span>
+              <span class="hud-val" id="live-stat-distance">0.00 <small>km</small></span>
+            </div>
+            <div class="hud-stat">
+              <span class="hud-label">STEPS</span>
+              <span class="hud-val" id="live-stat-steps">0</span>
+            </div>
+            <div class="hud-stat">
+              <span class="hud-label">PACE</span>
+              <span class="hud-val" id="live-stat-pace">0:00 <small>/km</small></span>
+            </div>
+            <div class="hud-stat">
+              <span class="hud-label">CALORIES</span>
+              <span class="hud-val" id="live-stat-calories">0 <small>kcal</small></span>
+            </div>
+          </div>
+
+          <!-- Active Walk Banner / Shape Preview -->
+          <div class="tracker-detected-shape" id="tracker-shape-badge">
+            <span class="shape-icon">✨</span>
+            <span class="shape-name" id="live-detected-shape">Detecting Geometry...</span>
+          </div>
+        </div>
+
+        <!-- Tracker Control Panel -->
+        <div class="tracker-controls-panel">
+          <!-- Simulation Presets Selector -->
+          <div class="preset-selector-group">
+            <label class="control-label">Walking Mode & Route Simulation:</label>
+            <div class="simulation-preset-buttons">
+              <button class="preset-btn active" data-preset="lake-jog">🌅 Lake Loop (3.2 km)</button>
+              <button class="preset-btn" data-preset="sjt-canteen">🏫 SJT to Food Court</button>
+              <button class="preset-btn" data-preset="perimeter-trek">🌲 Perimeter Trek (5.8 km)</button>
+              <button class="preset-btn" data-preset="custom-draw">✏️ Draw on Canvas</button>
+              <button class="preset-btn" data-preset="real-gps">📡 Real Device GPS</button>
+            </div>
+          </div>
+
+          <!-- Start / Pause / Finish Action Buttons -->
+          <div class="tracker-action-buttons">
+            <button class="btn-tracker-action btn-start" id="btn-toggle-walk">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span id="tracker-btn-text">Start Walking</span>
+            </button>
+
+            <button class="btn-tracker-action btn-finish" id="btn-finish-walk" disabled>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <span>Mint Artwork 🎨</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 3. COLORING STUDIO VIEW ================= -->
+      <section id="view-studio" class="app-view">
+        <div class="studio-header-bar">
+          <div>
+            <h2 class="view-title" id="studio-artwork-title">Whimsical Bloom</h2>
+            <p class="view-description" id="studio-artwork-meta">23 February 2024 • 5.6 km • 7,842 steps</p>
+          </div>
+          <div class="studio-header-actions">
+            <button class="btn-action-icon" id="btn-studio-share" title="Share Story Card">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+            </button>
+            <button class="btn-save-artwork" id="btn-studio-save">
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Main Art Canvas -->
+        <div class="studio-canvas-card">
+          <div class="interactive-svg-container" id="studio-canvas-container">
+            <!-- Dynamic Interactive SVG rendered via JS -->
+            <svg id="studio-interactive-svg" viewBox="0 0 500 500" class="studio-interactive-svg"></svg>
+          </div>
+          <div class="canvas-hint-pill">
+            <span>👆 Tap any pastel pigment blob to color it with the selected palette swatch</span>
+          </div>
+        </div>
+
+        <!-- Studio Control Tools -->
+        <div class="studio-tools-container">
+          <!-- Palette Theme Switcher -->
+          <div class="tool-section">
+            <div class="tool-section-header">
+              <label class="tool-label">Color Palette Theme</label>
+              <div class="palette-tab-buttons" id="palette-theme-tabs">
+                <button class="tab-btn active" data-palette-index="0">Pastel</button>
+                <button class="tab-btn" data-palette-index="1">Lavender</button>
+                <button class="tab-btn" data-palette-index="2">Sunshine</button>
+                <button class="tab-btn" data-palette-index="3">Campus</button>
+                <button class="tab-btn" data-palette-index="4">Earthy</button>
+                <button class="tab-btn" data-palette-index="5">Cyber</button>
+              </div>
+            </div>
+
+            <!-- Active Swatches -->
+            <div class="color-swatches-row" id="active-palette-swatches">
+              <!-- Swatches injected via JS -->
+            </div>
+          </div>
+
+          <!-- Brush Outline Style -->
+          <div class="tool-section">
+            <label class="tool-label">Outline Brush Style</label>
+            <div class="brush-selector-grid">
+              <button class="brush-card active" data-brush="INK">
+                <div class="brush-icon">✒️</div>
+                <div class="brush-info">
+                  <span class="brush-name">Fine Ink Pen</span>
+                  <span class="brush-desc">Crisp architectural line</span>
+                </div>
+              </button>
+
+              <button class="brush-card" data-brush="NEON">
+                <div class="brush-icon">⚡</div>
+                <div class="brush-info">
+                  <span class="brush-name">Cyber Neon</span>
+                  <span class="brush-desc">Glowing cyan-violet glow</span>
+                </div>
+              </button>
+
+              <button class="brush-card" data-brush="WATERCOLOR">
+                <div class="brush-icon">🎨</div>
+                <div class="brush-info">
+                  <span class="brush-name">Aquarelle Flow</span>
+                  <span class="brush-desc">Soft watercolor bleeding</span>
+                </div>
+              </button>
+
+              <button class="brush-card" data-brush="CHALK">
+                <div class="brush-icon">🖍️</div>
+                <div class="brush-info">
+                  <span class="brush-name">Campus Chalk</span>
+                  <span class="brush-desc">Textured organic outline</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Export Formats -->
+          <div class="tool-section">
+            <label class="tool-label">Export & Download</label>
+            <div class="export-actions-row">
+              <button class="btn-export-opt" id="btn-export-png">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>High-Res PNG</span>
+              </button>
+
+              <button class="btn-export-opt" id="btn-export-svg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                <span>Vector SVG</span>
+              </button>
+
+              <button class="btn-export-opt" id="btn-export-story-card">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>Instagram Story Card</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 4. CAMPUS MAP & LANDMARKS VIEW ================= -->
+      <section id="view-map" class="app-view">
+        <div class="view-header">
+          <h2 class="view-title">Interactive Campus Map</h2>
+          <p class="view-description">Explore landmarks, art walk challenges, and campus milestone zones.</p>
+        </div>
+
+        <div class="interactive-campus-map-card">
+          <div class="campus-svg-map-wrapper">
+            <svg id="campus-full-map-svg" viewBox="0 0 800 600" class="campus-full-map-svg">
+              <!-- Grid and Campus Paths -->
+              <defs>
+                <pattern id="campus-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#E2E8F0" stroke-width="1" />
+                </pattern>
+                <linearGradient id="lakeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#93C5FD" />
+                  <stop offset="100%" stop-color="#60A5FA" />
+                </linearGradient>
+              </defs>
+
+              <rect width="100%" height="100%" fill="#F8FAFC" />
+              <rect width="100%" height="100%" fill="url(#campus-grid)" opacity="0.6" />
+
+              <!-- Campus Green Lawns -->
+              <path d="M 120 180 Q 250 140 380 200 Q 420 320 280 360 Q 150 330 120 180 Z" fill="#D1FAE5" opacity="0.7" />
+              <path d="M 460 120 Q 680 90 700 240 Q 640 380 480 320 Z" fill="#FEF3C7" opacity="0.6" />
+
+              <!-- Campus Lake -->
+              <path d="M 520 400 Q 620 360 720 430 Q 750 540 600 560 Q 480 520 520 400 Z" fill="url(#lakeGradient)" opacity="0.8" />
+              <text x="610" y="475" fill="#1E40AF" font-size="14" font-weight="700" text-anchor="middle">Central Lake</text>
+
+              <!-- Main Roads -->
+              <path d="M 60 500 L 740 500" stroke="#CBD5E1" stroke-width="12" stroke-linecap="round" />
+              <path d="M 220 80 L 220 540" stroke="#CBD5E1" stroke-width="12" stroke-linecap="round" />
+              <path d="M 500 80 L 500 520" stroke="#CBD5E1" stroke-width="10" stroke-linecap="round" />
+              <path d="M 120 250 L 680 250" stroke="#CBD5E1" stroke-width="10" stroke-linecap="round" />
+
+              <!-- Walking Pathway Trails -->
+              <path d="M 220 250 C 300 200 420 200 500 250 C 580 300 620 380 520 400 C 400 420 300 350 220 250" 
+                    fill="none" stroke="#52B788" stroke-width="4" stroke-dasharray="6,6" />
+
+              <!-- Landmark Hotspots Group -->
+              <g id="map-landmark-pins">
+                <!-- Injected via JS -->
+              </g>
+            </svg>
+          </div>
+
+          <!-- Landmark Detail Bottom Drawer -->
+          <div class="landmark-drawer-card" id="landmark-drawer">
+            <div class="landmark-drawer-content">
+              <div class="landmark-drawer-icon" id="landmark-icon">🏫</div>
+              <div class="landmark-drawer-info">
+                <h4 class="landmark-drawer-title" id="landmark-title">Silver Jubilee Tower (SJT)</h4>
+                <p class="landmark-drawer-desc" id="landmark-desc">Main academic lecture complexes with multi-tiered escalators and wide corridors.</p>
+                <div class="landmark-drawer-stats" id="landmark-stats">
+                  <span>👣 3,420 steps today</span>
+                  <span>✨ 4 Art Walks created</span>
+                </div>
+              </div>
+              <button class="btn-walk-to-landmark" id="btn-walk-landmark">
+                <span>Start Walk Here</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preset Art Walk Routes List -->
+        <div class="campus-preset-walks-section">
+          <h3 class="section-title">Popular Campus Art Walks</h3>
+          <div class="preset-walk-cards-grid" id="campus-presets-list">
+            <!-- Preset Cards Injected via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 5. QUESTS & LEADERBOARD VIEW ================= -->
+      <section id="view-quests" class="app-view">
+        <div class="view-header">
+          <h2 class="view-title">Quests & Leaderboard</h2>
+          <p class="view-description">Complete daily walking challenges, climb the campus leaderboard, and earn pigment crystals.</p>
+        </div>
+
+        <!-- Quests & Challenges List -->
+        <div class="quests-container">
+          <div class="quest-tabs-header">
+            <button class="quest-tab-btn active" data-quest-cat="ALL">All Quests</button>
+            <button class="quest-tab-btn" data-quest-cat="Daily">Daily</button>
+            <button class="quest-tab-btn" data-quest-cat="Weekly">Weekly</button>
+            <button class="quest-tab-btn" data-quest-cat="Special">Special</button>
+          </div>
+
+          <div class="quest-cards-list" id="quests-list-container">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- Campus Student Leaderboard -->
+        <div class="leaderboard-section">
+          <h3 class="section-title">Campus Walking Leaderboard</h3>
+          <div class="leaderboard-card">
+            <div class="leaderboard-table-header">
+              <span>RANK</span>
+              <span>STUDENT</span>
+              <span>DISTANCE</span>
+              <span>CRYSTALS</span>
+            </div>
+            <div class="leaderboard-rows" id="leaderboard-rows-container">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 6. PIGMENT LAB & STORE VIEW ================= -->
+      <section id="view-store" class="app-view">
+        <div class="view-header">
+          <div class="store-wallet-header">
+            <div>
+              <h2 class="view-title">Pigment Lab & Store</h2>
+              <p class="view-description">Unlock rare artist palettes, custom brush strokes, and generative canvas effects.</p>
+            </div>
+            <div class="store-crystal-wallet">
+              <span class="wallet-label">YOUR BALANCE</span>
+              <div class="wallet-amount">
+                <span class="wallet-icon">💎</span>
+                <span class="wallet-val" id="store-wallet-val">850</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Store Catalog Tabs -->
+        <div class="store-category-tabs">
+          <button class="store-tab-btn active" data-store-tab="BRUSH">Brushes & Strokes</button>
+          <button class="store-tab-btn" data-store-tab="PALETTE">Color Palettes</button>
+          <button class="store-tab-btn" data-store-tab="EFFECT">Pigment Effects</button>
+        </div>
+
+        <!-- Store Items Grid -->
+        <div class="store-items-grid" id="store-items-grid-container">
+          <!-- Injected via JS -->
+        </div>
+      </section>
+
+      <!-- ================= 7. PROFILE & ARTWORKS VIEW ================= -->
+      <section id="view-profile" class="app-view">
+        <div class="profile-hero-card">
+          <div class="profile-avatar-large">
+            <span class="profile-avatar-emoji">👨‍🎓</span>
+          </div>
+          <h2 class="profile-name">Neeraj</h2>
+          <p class="profile-handle">@neeraj.walkart • VIT Main Campus</p>
+          <span class="profile-level-badge">Level 8 Master Cartographer</span>
+
+          <div class="profile-stats-summary-grid">
+            <div class="profile-summary-stat">
+              <span class="stat-num" id="prof-stat-total-km">48.2</span>
+              <span class="stat-lbl">Total km</span>
+            </div>
+            <div class="profile-summary-stat">
+              <span class="stat-num" id="prof-stat-artworks">8</span>
+              <span class="stat-lbl">Artworks</span>
+            </div>
+            <div class="profile-summary-stat">
+              <span class="stat-num" id="prof-stat-crystals">850</span>
+              <span class="stat-lbl">Crystals</span>
+            </div>
+            <div class="profile-summary-stat">
+              <span class="stat-num" id="prof-stat-streak">7 🔥</span>
+              <span class="stat-lbl">Day Streak</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Achievement Badges -->
+        <div class="profile-badges-section">
+          <h3 class="section-title">Unlocked Badges</h3>
+          <div class="badges-grid" id="profile-badges-container">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- Complete Artworks Gallery -->
+        <div class="profile-gallery-section">
+          <div class="gallery-filter-row">
+            <h3 class="section-title">My Art Collection</h3>
+            <div class="gallery-category-chips">
+              <button class="filter-chip active" data-filter="ALL">All</button>
+              <button class="filter-chip" data-filter="Floral">Floral</button>
+              <button class="filter-chip" data-filter="Fauna">Fauna</button>
+              <button class="filter-chip" data-filter="Ribbon">Ribbon</button>
+              <button class="filter-chip" data-filter="FAVORITE">★ Favorites</button>
+            </div>
+          </div>
+
+          <div class="artworks-grid" id="profile-artworks-grid">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Mobile Navigation Bar -->
+    <nav class="bottom-nav-bar" id="bottom-nav">
+      <button class="nav-item active" data-target-view="view-home" id="nav-btn-home">
+        <div class="nav-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </div>
+        <span class="nav-label">Home</span>
+      </button>
+
+      <button class="nav-item" data-target-view="view-tracker" id="nav-btn-tracker">
+        <div class="nav-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
+        </div>
+        <span class="nav-label">Track</span>
+      </button>
+
+      <button class="nav-item" data-target-view="view-studio" id="nav-btn-studio">
+        <div class="nav-icon-box studio-highlight-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+            <path d="M2 2l7.586 7.586"></path>
+            <circle cx="11" cy="11" r="2"></circle>
+          </svg>
+        </div>
+        <span class="nav-label">Studio</span>
+      </button>
+
+      <button class="nav-item" data-target-view="view-map" id="nav-btn-map">
+        <div class="nav-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+            <line x1="8" y1="2" x2="8" y2="18"></line>
+            <line x1="16" y1="6" x2="16" y2="22"></line>
+          </svg>
+        </div>
+        <span class="nav-label">Map</span>
+      </button>
+
+      <button class="nav-item" data-target-view="view-quests" id="nav-btn-quests">
+        <div class="nav-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"></path>
+            <path d="M18 14.66V17c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1v-2.34"></path>
+            <path d="M14 2v4"></path>
+            <path d="M10 2v4"></path>
+            <path d="M6 6h12a2 2 0 0 1 2 2v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8a2 2 0 0 1 2-2z"></path>
+          </svg>
+        </div>
+        <span class="nav-label">Quests</span>
+      </button>
+
+      <button class="nav-item" data-target-view="view-store" id="nav-btn-store">
+        <div class="nav-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+            <path d="M3 6h18"></path>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+        </div>
+        <span class="nav-label">Store</span>
+      </button>
+    </nav>
+
+    <!-- General Modal Dialog -->
+    <div id="general-modal" class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title" id="modal-title">✨ Modal Title</h3>
+          <button class="modal-close-btn" id="modal-close-btn">×</button>
+        </div>
+        <div class="modal-body" id="modal-body">
+          <!-- Injected via JS -->
+        </div>
+        <div class="modal-footer" id="modal-footer">
+          <button class="btn-modal-primary" id="modal-action-btn">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container" class="toast-container"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
