@@ -28,6 +28,7 @@ import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.ui.challenges.ChallengesScreen
 import com.example.ui.challenges.ChallengesViewModel
+import com.example.ui.home.ArtworksGalleryScreen
 import com.example.ui.home.HomeScreen
 import com.example.ui.home.HomeViewModel
 import com.example.ui.map.CampusMapScreen
@@ -51,18 +52,18 @@ fun MainScreen(
     val context = LocalContext.current
     val application = context.applicationContext as Application
 
-    val isStudioScreen = currentRoute?.startsWith("studio") == true
+    val isStudioScreen = currentRoute?.startsWith("studio") == true || currentRoute == Screen.Tracker.route
 
     Scaffold(
-        containerColor = SoftWhiteBackground,
+        containerColor = Color(0xFFFAF9F6),
         contentWindowInsets = WindowInsets.safeDrawing,
         bottomBar = {
             if (!isStudioScreen) {
                 Surface(
-                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                    color = PureWhiteSurface,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
-                    shadowElevation = 4.dp,
+                    shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                    color = Color.White,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF3F4F6)),
+                    shadowElevation = 8.dp,
                     modifier = Modifier
                         .fillMaxWidth()
                         .windowInsetsPadding(WindowInsets.navigationBars)
@@ -70,11 +71,11 @@ fun MainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Home Tab
+                        // 1. Home Tab
                         val isHome = currentRoute == Screen.Home.route || currentRoute == null
                         BottomNavItem(
                             icon = if (isHome) Icons.Filled.Home else Icons.Outlined.Home,
@@ -88,52 +89,40 @@ fun MainScreen(
                             testTag = "nav_home"
                         )
 
-                        // Campus Map Tab
+                        // 2. Artworks Tab
+                        val isArtworks = currentRoute == Screen.Artworks.route
+                        BottomNavItem(
+                            icon = if (isArtworks) Icons.Filled.PhotoLibrary else Icons.Outlined.PhotoLibrary,
+                            label = "Artworks",
+                            isSelected = isArtworks,
+                            onClick = {
+                                navController.navigate(Screen.Artworks.route)
+                            },
+                            testTag = "nav_artworks"
+                        )
+
+                        // 3. Canvas Tab
+                        val isCanvas = currentRoute == Screen.Canvas.route
+                        BottomNavItem(
+                            icon = if (isCanvas) Icons.Filled.Palette else Icons.Outlined.Palette,
+                            label = "Canvas",
+                            isSelected = isCanvas,
+                            onClick = {
+                                navController.navigate(Screen.Canvas.route)
+                            },
+                            testTag = "nav_canvas"
+                        )
+
+                        // 4. Map Tab
                         val isMap = currentRoute == Screen.Map.route
                         BottomNavItem(
                             icon = if (isMap) Icons.Filled.Map else Icons.Outlined.Map,
-                            label = "Campus",
+                            label = "Map",
                             isSelected = isMap,
                             onClick = {
                                 navController.navigate(Screen.Map.route)
                             },
                             testTag = "nav_map"
-                        )
-
-                        // Challenges Tab
-                        val isChallenges = currentRoute == Screen.Challenges.route
-                        BottomNavItem(
-                            icon = if (isChallenges) Icons.Filled.EmojiEvents else Icons.Outlined.EmojiEvents,
-                            label = "Quests",
-                            isSelected = isChallenges,
-                            onClick = {
-                                navController.navigate(Screen.Challenges.route)
-                            },
-                            testTag = "nav_challenges"
-                        )
-
-                        // Store Tab
-                        val isStore = currentRoute == Screen.Store.route
-                        BottomNavItem(
-                            icon = if (isStore) Icons.Filled.Palette else Icons.Outlined.Palette,
-                            label = "Store",
-                            isSelected = isStore,
-                            onClick = {
-                                navController.navigate(Screen.Store.route)
-                            },
-                            testTag = "nav_store"
-                        )
-
-                        // Profile Tab
-                        val isProfile = currentRoute == Screen.Profile.route
-                        BottomNavItem(
-                            icon = if (isProfile) Icons.Filled.Person else Icons.Outlined.Person,
-                            label = "Profile",
-                            isSelected = isProfile,
-                            onClick = {
-                                navController.navigate(Screen.Profile.route)
-                            },
-                            testTag = "nav_profile"
                         )
                     }
                 }
@@ -142,7 +131,7 @@ fun MainScreen(
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Map.route,
+            startDestination = Screen.Home.route, // Home page is the start destination
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Home.route) {
@@ -157,6 +146,33 @@ fun MainScreen(
                     },
                     onNavigateToProfile = {
                         navController.navigate(Screen.Profile.route)
+                    }
+                )
+            }
+
+            composable(Screen.Artworks.route) {
+                val homeVm: HomeViewModel = viewModel()
+                ArtworksGalleryScreen(
+                    viewModel = homeVm,
+                    onNavigateToStudio = { routeId ->
+                        navController.navigate(Screen.Studio.createRoute(routeId))
+                    },
+                    onNavigateToTracker = {
+                        navController.navigate(Screen.Tracker.route)
+                    }
+                )
+            }
+
+            composable(Screen.Canvas.route) {
+                val studioVm = remember {
+                    ColoringStudioViewModel(application, 1L)
+                }
+                ColoringStudioScreen(
+                    viewModel = studioVm,
+                    onNavigateBack = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
                     }
                 )
             }
@@ -230,9 +246,7 @@ fun MainScreen(
                 ProfileScreen(
                     viewModel = profileVm,
                     onNavigateToArtworks = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Home.route) { inclusive = true }
-                        }
+                        navController.navigate(Screen.Artworks.route)
                     },
                     onNavigateToColourGallery = {
                         navController.navigate(Screen.Store.route)
@@ -260,21 +274,21 @@ private fun BottomNavItem(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .padding(horizontal = 8.dp, vertical = 2.dp)
             .testTag(testTag)
     ) {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .background(if (isSelected) Color(0xFFF3E8FF) else Color.Transparent)
-                .padding(horizontal = 12.dp, vertical = 4.dp),
+                .background(if (isSelected) Color(0xFFECFDF5) else Color.Transparent)
+                .padding(horizontal = 14.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isSelected) Color(0xFF7C3AED) else Color(0xFF9CA3AF),
-                modifier = Modifier.size(20.dp)
+                tint = if (isSelected) Color(0xFF059669) else Color(0xFF9CA3AF),
+                modifier = Modifier.size(22.dp)
             )
         }
         Spacer(modifier = Modifier.height(2.dp))
@@ -284,19 +298,7 @@ private fun BottomNavItem(
                 fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium,
                 fontSize = 11.sp
             ),
-            color = if (isSelected) Color(0xFF7C3AED) else Color(0xFF9CA3AF)
+            color = if (isSelected) Color(0xFF059669) else Color(0xFF9CA3AF)
         )
-        // Small dot indicator under active tab
-        if (isSelected) {
-            Box(
-                modifier = Modifier
-                    .padding(top = 2.dp)
-                    .size(4.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF7C3AED))
-            )
-        } else {
-            Spacer(modifier = Modifier.height(6.dp))
-        }
     }
 }
