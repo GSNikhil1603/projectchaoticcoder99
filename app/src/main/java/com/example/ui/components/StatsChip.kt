@@ -14,7 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
 
 @Composable
@@ -23,8 +25,8 @@ fun StatsChip(
     valueText: String,
     labelText: String,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = SurfaceCardMuted,
-    iconTint: Color = AccentMint,
+    backgroundColor: Color = MutedSurface,
+    iconTint: Color = ElectricPurple,
     onClick: (() -> Unit)? = null
 ) {
     val chipModifier = modifier
@@ -55,12 +57,15 @@ fun StatsChip(
         Column {
             Text(
                 text = valueText,
-                style = MaterialTheme.typography.titleMedium,
-                color = DarkSlatePrimary
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                ),
+                color = NearBlackInk
             )
             Text(
                 text = labelText,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                 color = TextMuted
             )
         }

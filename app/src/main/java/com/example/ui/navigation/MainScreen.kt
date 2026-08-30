@@ -54,14 +54,15 @@ fun MainScreen(
     val isStudioScreen = currentRoute?.startsWith("studio") == true
 
     Scaffold(
-        containerColor = MintBackground,
+        containerColor = SoftWhiteBackground,
         contentWindowInsets = WindowInsets.safeDrawing,
         bottomBar = {
             if (!isStudioScreen) {
                 Surface(
-                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                    color = SurfaceCard,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                    color = PureWhiteSurface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
+                    shadowElevation = 4.dp,
                     modifier = Modifier
                         .fillMaxWidth()
                         .windowInsetsPadding(WindowInsets.navigationBars)
@@ -69,15 +70,15 @@ fun MainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Home Tab
                         val isHome = currentRoute == Screen.Home.route || currentRoute == null
                         BottomNavItem(
-                            icon = if (isHome) Icons.Filled.GridView else Icons.Outlined.GridView,
-                            label = "Artworks",
+                            icon = if (isHome) Icons.Filled.Home else Icons.Outlined.Home,
+                            label = "Home",
                             isSelected = isHome,
                             onClick = {
                                 navController.navigate(Screen.Home.route) {
@@ -85,18 +86,6 @@ fun MainScreen(
                                 }
                             },
                             testTag = "nav_home"
-                        )
-
-                        // Tracker Tab
-                        val isTracker = currentRoute == Screen.Tracker.route
-                        BottomNavItem(
-                            icon = if (isTracker) Icons.Filled.DirectionsWalk else Icons.Outlined.DirectionsWalk,
-                            label = "Track Walk",
-                            isSelected = isTracker,
-                            onClick = {
-                                navController.navigate(Screen.Tracker.route)
-                            },
-                            testTag = "nav_tracker"
                         )
 
                         // Campus Map Tab
@@ -153,7 +142,7 @@ fun MainScreen(
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Map.route,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Home.route) {
@@ -269,29 +258,45 @@ private fun BottomNavItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 6.dp)
+            .padding(horizontal = 6.dp, vertical = 2.dp)
             .testTag(testTag)
     ) {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .background(if (isSelected) BlackPill else Color.Transparent)
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .background(if (isSelected) Color(0xFFF3E8FF) else Color.Transparent)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isSelected) Color.White else TextMuted,
+                tint = if (isSelected) Color(0xFF7C3AED) else Color(0xFF9CA3AF),
                 modifier = Modifier.size(20.dp)
             )
         }
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (isSelected) DarkSlatePrimary else TextMuted
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium,
+                fontSize = 11.sp
+            ),
+            color = if (isSelected) Color(0xFF7C3AED) else Color(0xFF9CA3AF)
         )
+        // Small dot indicator under active tab
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .size(4.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF7C3AED))
+            )
+        } else {
+            Spacer(modifier = Modifier.height(6.dp))
+        }
     }
 }

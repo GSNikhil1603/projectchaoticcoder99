@@ -5,12 +5,13 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -33,170 +35,212 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.data.model.PointF
 import com.example.ui.theme.*
 
-private val CampusNavyHeader = Color(0xFF0F2537)
-private val CampusAccentGreen = Color(0xFF38B07D)
+// Design tokens per specification
+private val ColorDarkPrimary = Color(0xFF1A1A1A)
+private val ColorTextSecondary = Color(0xFF6B7280)
+private val ColorAccentPurple = Color(0xFF7C3AED)
+private val ColorLightBackground = Color(0xFFFAFAFA)
+private val ColorLightGrayInput = Color(0xFFF5F5F5)
+private val ColorLakeOverlay = Color(0x663B82F6) // translucent blue
+private val ColorLakeStroke = Color(0xFF2563EB)
+private val ColorLightGreenPill = Color(0xFFD1FAE5)
+private val ColorDarkGreenText = Color(0xFF065F46)
+private val ColorLightBluePill = Color(0xFFDBEAFE)
+private val ColorDarkBlueText = Color(0xFF1E40AF)
+private val ColorBorder = Color(0xFFE5E7EB)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampusMapScreen(
     onNavigateToTracker: (String?) -> Unit,
-    onNavigateToChallenges: () -> Unit,
+    onNavigateToChallenges: () -> Unit = {},
     viewModel: CampusMapViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val filteredLandmarks = remember(uiState.selectedCategory, uiState.searchQuery) {
-        viewModel.getFilteredLandmarks()
+    val filteredBuildings = remember(uiState.selectedCategory, uiState.searchQuery) {
+        viewModel.getFilteredBuildings()
     }
 
     var zoomScale by remember { mutableFloatStateOf(1.0f) }
     var panOffsetX by remember { mutableFloatStateOf(0f) }
     var panOffsetY by remember { mutableFloatStateOf(0f) }
 
-    // Pulsing effect for active location
-    val infiniteTransition = rememberInfiniteTransition(label = "mapPulse")
+    // Pulsing animation for active route or user location
+    val infiniteTransition = rememberInfiniteTransition(label = "markerPulse")
     val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.85f,
+        initialValue = 0.3f,
+        targetValue = 0.9f,
         animationSpec = infiniteRepeatable(
             animation = tween(1200, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "pulse"
+        label = "pulseAlpha"
     )
 
     Scaffold(
-        containerColor = MintBackground,
-        topBar = {
-            Surface(
-                color = Color.White,
-                shadowElevation = 2.dp
+        containerColor = ColorLightBackground,
+        contentWindowInsets = WindowInsets.safeDrawing
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Header, Search, and Tabs (Hidden if fullscreen is enabled)
+            AnimatedVisibility(
+                visible = !uiState.isFullscreen,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                        .background(Color.White)
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
                 ) {
+                    // 1. Header
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
+                            // Top label in small uppercase gray text
                             Text(
                                 text = "OFFICE OF STUDENT'S WELFARE",
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    letterSpacing = 1.2.sp,
-                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.1.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     fontSize = 10.sp
                                 ),
-                                color = CampusNavyHeader.copy(alpha = 0.7f)
+                                color = ColorTextSecondary
                             )
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                // Large bold title: "VIT Vellore Campus" (font-size: 28, font-weight: 800, color: #1A1A1A)
                                 Text(
                                     text = "VIT Vellore Campus",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 20.sp
+                                    style = MaterialTheme.typography.displayMedium.copy(
+                                        fontSize = 28.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        letterSpacing = (-0.02).em
                                     ),
-                                    color = CampusNavyHeader
+                                    color = ColorDarkPrimary
                                 )
+                                // Small pill badge: "372 ACRES" in light green background (#D1FAE5), dark green text (#065F46)
                                 Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = AccentMintLight,
-                                    border = BorderStroke(1.dp, CampusAccentGreen.copy(alpha = 0.3f))
+                                    shape = RoundedCornerShape(24.dp),
+                                    color = ColorLightGreenPill
                                 ) {
                                     Text(
                                         text = "372 ACRES",
                                         style = MaterialTheme.typography.labelSmall.copy(
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 9.sp
+                                            fontSize = 10.sp
                                         ),
-                                        color = DarkSlatePrimary,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        color = ColorDarkGreenText,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                     )
                                 }
                             }
                         }
 
-                        // Reset View / Center on Lake Button
+                        // Top-right: Fullscreen toggle icon button
                         IconButton(
-                            onClick = {
-                                zoomScale = 1.0f
-                                panOffsetX = 0f
-                                panOffsetY = 0f
-                            },
+                            onClick = { viewModel.toggleFullscreen() },
                             modifier = Modifier
-                                .size(38.dp)
+                                .size(40.dp)
                                 .clip(CircleShape)
-                                .background(MintBackground)
+                                .background(ColorLightGrayInput)
+                                .testTag("fullscreen_toggle_button")
                         ) {
                             Icon(
-                                imageVector = Icons.Default.CenterFocusStrong,
-                                contentDescription = "Center Map",
-                                tint = DarkSlatePrimary,
-                                modifier = Modifier.size(20.dp)
+                                imageVector = if (uiState.isFullscreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                                contentDescription = "Toggle Fullscreen",
+                                tint = ColorDarkPrimary,
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Search Bar
-                    OutlinedTextField(
-                        value = uiState.searchQuery,
-                        onValueChange = { viewModel.updateSearchQuery(it) },
+                    // 2. Search Bar
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = ColorLightGrayInput,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp)
-                            .testTag("campus_map_search"),
-                        placeholder = {
-                            Text(
-                                text = "Search SJT, TT, VIT Lake, Hostels, Gates...",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                                color = TextMuted
-                            )
-                        },
-                        leadingIcon = {
+                            .height(48.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "Search",
-                                tint = TextMuted,
+                                tint = ColorTextSecondary,
                                 modifier = Modifier.size(20.dp)
                             )
-                        },
-                        trailingIcon = {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            androidx.compose.foundation.text.BasicTextField(
+                                value = uiState.searchQuery,
+                                onValueChange = { viewModel.updateSearchQuery(it) },
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                    color = ColorDarkPrimary,
+                                    fontSize = 14.sp
+                                ),
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                    imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                                ),
+                                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                    onSearch = {
+                                        // Dismiss keyboard gracefully
+                                    }
+                                ),
+                                decorationBox = { innerTextField ->
+                                    if (uiState.searchQuery.isEmpty()) {
+                                        Text(
+                                            text = "Search SJT, TT, VIT Lake, Hostels, Gates...",
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                                            color = ColorTextSecondary
+                                        )
+                                    }
+                                    innerTextField()
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("campus_map_search_input")
+                            )
                             if (uiState.searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                                IconButton(
+                                    onClick = { viewModel.updateSearchQuery("") },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Clear",
-                                        tint = TextMuted,
-                                        modifier = Modifier.size(18.dp)
+                                        tint = ColorTextSecondary,
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
                             }
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = CampusAccentGreen,
-                            unfocusedBorderColor = Color(0xFFE2E8F0),
-                            focusedContainerColor = MintBackground,
-                            unfocusedContainerColor = MintBackground
-                        ),
-                        singleLine = true
-                    )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Layer Switcher Chips (Standard / Route Art / Shuttle)
+                    // 3. Map Type Tabs (horizontal scrollable pills)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -204,28 +248,39 @@ fun CampusMapScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         MapLayerMode.entries.forEach { mode ->
-                            val isSelected = uiState.layerMode == mode
+                            val isSelected = uiState.selectedLayerMode == mode
                             Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = if (isSelected) CampusNavyHeader else Color(0xFFF1F5F9),
-                                border = if (isSelected) null else BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                                modifier = Modifier.clickable {
-                                    viewModel.setLayerMode(mode)
-                                }
+                                shape = RoundedCornerShape(24.dp),
+                                color = if (isSelected) ColorDarkPrimary else Color.White,
+                                border = if (isSelected) null else BorderStroke(1.dp, ColorDarkPrimary),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .clickable { viewModel.selectLayerMode(mode) }
+                                    .testTag("map_type_tab_${mode.name}")
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(5.dp),
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
                                 ) {
-                                    Text(text = mode.icon, fontSize = 12.sp)
+                                    val tabIcon = when (mode) {
+                                        MapLayerMode.STANDARD -> Icons.Default.Map
+                                        MapLayerMode.ROUTE_ART -> Icons.Default.Route
+                                        MapLayerMode.SHUTTLE -> Icons.Default.DirectionsBus
+                                    }
+                                    Icon(
+                                        imageVector = tabIcon,
+                                        contentDescription = mode.label,
+                                        tint = if (isSelected) Color.White else ColorDarkPrimary,
+                                        modifier = Modifier.size(15.dp)
+                                    )
                                     Text(
                                         text = mode.label,
                                         style = MaterialTheme.typography.labelSmall.copy(
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            fontSize = 11.sp
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 12.sp
                                         ),
-                                        color = if (isSelected) Color.White else DarkSlatePrimary
+                                        color = if (isSelected) Color.White else ColorDarkPrimary
                                     )
                                 }
                             }
@@ -234,710 +289,589 @@ fun CampusMapScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Category Filter Chips
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    // 4. Zone Filter Chips (horizontal scrollable)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(CampusCategory.entries) { category ->
-                            val isSelected = uiState.selectedCategory == category
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { viewModel.selectCategory(category) },
-                                label = {
-                                    Text(
-                                        text = "${category.emoji} ${category.displayName}",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontSize = 11.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                        )
+                        CampusCategory.entries.forEach { cat ->
+                            val isSelected = uiState.selectedCategory == cat
+                            Surface(
+                                shape = RoundedCornerShape(24.dp),
+                                color = if (isSelected) ColorLightBluePill else ColorLightGrayInput,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .clickable { viewModel.selectCategory(cat) }
+                                    .testTag("zone_filter_${cat.name}")
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    val catIcon = when (cat) {
+                                        CampusCategory.ALL -> Icons.Default.Map
+                                        CampusCategory.ACADEMIC -> Icons.Default.Apartment
+                                        CampusCategory.HOSTELS -> Icons.Default.Bed
+                                        CampusCategory.SPORTS -> Icons.Default.DirectionsRun
+                                        CampusCategory.TRANSIT -> Icons.Default.DirectionsBus
+                                    }
+                                    Icon(
+                                        imageVector = catIcon,
+                                        contentDescription = cat.displayName,
+                                        tint = if (isSelected) ColorDarkBlueText else ColorTextSecondary,
+                                        modifier = Modifier.size(14.dp)
                                     )
-                                },
-                                shape = RoundedCornerShape(20.dp),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = AccentMintLight,
-                                    selectedLabelColor = DarkSlatePrimary,
-                                    containerColor = Color.Transparent,
-                                    labelColor = TextMuted
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = isSelected,
-                                    borderColor = Color(0xFFCBD5E1),
-                                    selectedBorderColor = CampusAccentGreen
-                                )
-                            )
+                                    Text(
+                                        text = cat.displayName,
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            fontSize = 11.sp
+                                        ),
+                                        color = if (isSelected) ColorDarkBlueText else ColorTextSecondary
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFEBF0EC))
-        ) {
-            // Interactive Vector Map Canvas
+
+            // 5. Map View (takes rest of the screen) + Overlays + Bottom Cards
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            zoomScale = (zoomScale * zoom).coerceIn(0.75f, 3.5f)
-                            panOffsetX += pan.x
-                            panOffsetY += pan.y
-                        }
-                    }
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .background(Color(0xFFF0F4F8))
             ) {
-                Canvas(
+                // Interactive Vector / Pinch-to-zoom Map Canvas
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .testTag("campus_vector_canvas")
+                        .pointerInput(Unit) {
+                            detectTransformGestures { _, pan, zoom, _ ->
+                                zoomScale = (zoomScale * zoom).coerceIn(0.7f, 4.0f)
+                                panOffsetX += pan.x
+                                panOffsetY += pan.y
+                            }
+                        }
                 ) {
-                    val canvasWidth = size.width
-                    val canvasHeight = size.height
-                    val baseScale = (canvasWidth / 1000f) * zoomScale
-                    val centerX = (canvasWidth / 2f) + panOffsetX
-                    val centerY = (canvasHeight / 2f) + panOffsetY
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("campus_map_canvas")
+                    ) {
+                        val canvasWidth = size.width
+                        val canvasHeight = size.height
+                        val baseScale = (canvasWidth / 1000f) * zoomScale
+                        val centerX = (canvasWidth / 2f) + panOffsetX
+                        val centerY = (canvasHeight / 2f) + panOffsetY
 
-                    // Helper to transform normalized (0..1000) coords to canvas space
-                    fun toCanvasOffset(normX: Float, normY: Float): Offset {
-                        val localX = (normX - 500f) * baseScale + centerX
-                        val localY = (normY - 500f) * baseScale + centerY
-                        return Offset(localX, localY)
-                    }
-
-                    fun toCanvasSize(w: Float, h: Float): Size {
-                        return Size(w * baseScale, h * baseScale)
-                    }
-
-                    // 1. Base Campus Ground
-                    drawRect(
-                        color = Color(0xFFF7F4EB), // Warm beige campus background
-                        size = size
-                    )
-
-                    // 2. Green Lawn Zones & Fields
-                    // SJT Ground Induction Venue (South East)
-                    val sjtGroundCenter = toCanvasOffset(680f, 700f)
-                    drawRoundRect(
-                        color = Color(0xFFBBE5B3),
-                        topLeft = Offset(sjtGroundCenter.x - 70f * baseScale, sjtGroundCenter.y - 60f * baseScale),
-                        size = toCanvasSize(140f, 120f),
-                        cornerRadius = CornerRadius(25f * baseScale)
-                    )
-
-                    // VIT Fields (East)
-                    val vitFieldsCenter = toCanvasOffset(890f, 350f)
-                    drawRoundRect(
-                        color = Color(0xFF6BBF59),
-                        topLeft = Offset(vitFieldsCenter.x - 65f * baseScale, vitFieldsCenter.y - 50f * baseScale),
-                        size = toCanvasSize(130f, 100f),
-                        cornerRadius = CornerRadius(16f * baseScale)
-                    )
-
-                    // Open Stadium Zone (Top Center)
-                    val stadiumCenter = toCanvasOffset(510f, 145f)
-                    drawRoundRect(
-                        color = Color(0xFFE8D7B8),
-                        topLeft = Offset(stadiumCenter.x - 55f * baseScale, stadiumCenter.y - 45f * baseScale),
-                        size = toCanvasSize(110f, 90f),
-                        cornerRadius = CornerRadius(18f * baseScale)
-                    )
-
-                    // Helipad
-                    val helipadCenter = toCanvasOffset(510f, 80f)
-                    drawRoundRect(
-                        color = Color(0xFFD4A373),
-                        topLeft = Offset(helipadCenter.x - 25f * baseScale, helipadCenter.y - 25f * baseScale),
-                        size = toCanvasSize(50f, 50f),
-                        cornerRadius = CornerRadius(10f * baseScale)
-                    )
-
-                    // 3. Central VIT Lake (Detailed contoured organic water polygon)
-                    val lakePath = Path().apply {
-                        val pt1 = toCanvasOffset(405f, 680f)
-                        val pt2 = toCanvasOffset(450f, 640f)
-                        val pt3 = toCanvasOffset(520f, 630f)
-                        val pt4 = toCanvasOffset(600f, 660f)
-                        val pt5 = toCanvasOffset(650f, 715f)
-                        val pt6 = toCanvasOffset(610f, 770f)
-                        val pt7 = toCanvasOffset(535f, 785f)
-                        val pt8 = toCanvasOffset(465f, 765f)
-                        val pt9 = toCanvasOffset(420f, 730f)
-
-                        moveTo(pt1.x, pt1.y)
-                        quadraticTo(pt2.x, pt2.y, pt3.x, pt3.y)
-                        quadraticTo(pt4.x, pt4.y, pt5.x, pt5.y)
-                        quadraticTo(pt6.x, pt6.y, pt7.x, pt7.y)
-                        quadraticTo(pt8.x, pt8.y, pt9.x, pt9.y)
-                        close()
-                    }
-
-                    // Lake shoreline border
-                    drawPath(
-                        path = lakePath,
-                        color = Color(0xFF86BBD8),
-                        style = Stroke(width = 6f * baseScale)
-                    )
-                    // Lake water fill with gradient
-                    drawPath(
-                        path = lakePath,
-                        brush = Brush.radialGradient(
-                            colors = listOf(Color(0xFF3A86C8), Color(0xFF22577A)),
-                            center = toCanvasOffset(530f, 710f),
-                            radius = 120f * baseScale
-                        )
-                    )
-
-                    // Swimming Pool (Rectangular Blue)
-                    val poolCenter = toCanvasOffset(505f, 265f)
-                    drawRoundRect(
-                        color = Color(0xFF48CAE4),
-                        topLeft = Offset(poolCenter.x - 22f * baseScale, poolCenter.y - 18f * baseScale),
-                        size = toCanvasSize(44f, 36f),
-                        cornerRadius = CornerRadius(6f * baseScale)
-                    )
-
-                    // 4. Primary Road & Pathway Network
-                    val roadPaintColor = Color.White.copy(alpha = 0.95f)
-                    val roadStrokeWidth = 14f * baseScale
-
-                    // Katpadi Main Road (South Axis)
-                    val mainRoadPath = Path().apply {
-                        val r1 = toCanvasOffset(30f, 620f)
-                        val r2 = toCanvasOffset(380f, 870f)
-                        val r3 = toCanvasOffset(710f, 925f)
-                        val r4 = toCanvasOffset(980f, 930f)
-                        moveTo(r1.x, r1.y)
-                        lineTo(r2.x, r2.y)
-                        lineTo(r3.x, r3.y)
-                        lineTo(r4.x, r4.y)
-                    }
-                    drawPath(path = mainRoadPath, color = Color(0xFFCBD5E1), style = Stroke(width = 20f * baseScale, cap = StrokeCap.Round))
-                    drawPath(path = mainRoadPath, color = Color(0xFF64748B), style = Stroke(width = 12f * baseScale, cap = StrokeCap.Round))
-
-                    // Internal Ring & Central Avenues
-                    val internalRoads = Path().apply {
-                        // Central East-West Spine
-                        val p1 = toCanvasOffset(110f, 600f) // Gate 1
-                        val p2 = toCanvasOffset(380f, 540f)
-                        val p3 = toCanvasOffset(520f, 520f)
-                        val p4 = toCanvasOffset(760f, 480f)
-                        val p5 = toCanvasOffset(960f, 440f) // Mach & East Gate
-                        moveTo(p1.x, p1.y)
-                        lineTo(p2.x, p2.y)
-                        lineTo(p3.x, p3.y)
-                        lineTo(p4.x, p4.y)
-                        lineTo(p5.x, p5.y)
-
-                        // North Hostel Road
-                        val h1 = toCanvasOffset(270f, 210f)
-                        val h2 = toCanvasOffset(500f, 320f)
-                        val h3 = toCanvasOffset(720f, 210f)
-                        val h4 = toCanvasOffset(840f, 290f)
-                        moveTo(h1.x, h1.y)
-                        lineTo(h2.x, h2.y)
-                        lineTo(h3.x, h3.y)
-                        lineTo(h4.x, h4.y)
-
-                        // Cross Connectors
-                        val c1 = toCanvasOffset(380f, 540f)
-                        val c2 = toCanvasOffset(315f, 200f)
-                        moveTo(c1.x, c1.y)
-                        lineTo(c2.x, c2.y)
-
-                        val d1 = toCanvasOffset(710f, 570f) // SJT
-                        val d2 = toCanvasOffset(740f, 210f) // MH-N
-                        moveTo(d1.x, d1.y)
-                        lineTo(d2.x, d2.y)
-
-                        val lk1 = toCanvasOffset(400f, 540f)
-                        val lk2 = toCanvasOffset(405f, 680f)
-                        val lk3 = toCanvasOffset(400f, 860f)
-                        moveTo(lk1.x, lk1.y)
-                        lineTo(lk2.x, lk2.y)
-                        lineTo(lk3.x, lk3.y)
-                    }
-                    drawPath(path = internalRoads, color = roadPaintColor, style = Stroke(width = roadStrokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round))
-
-                    // 5. Shuttle Transit Route Overlay
-                    if (uiState.layerMode == MapLayerMode.SHUTTLE_TRANSIT) {
-                        val shuttleRoutePath = Path().apply {
-                            val s1 = toCanvasOffset(380f, 540f)
-                            val s2 = toCanvasOffset(505f, 530f)
-                            val s3 = toCanvasOffset(640f, 510f)
-                            val s4 = toCanvasOffset(760f, 480f)
-                            val s5 = toCanvasOffset(785f, 380f)
-                            val s6 = toCanvasOffset(840f, 200f)
-                            moveTo(s1.x, s1.y)
-                            lineTo(s2.x, s2.y)
-                            lineTo(s3.x, s3.y)
-                            lineTo(s4.x, s4.y)
-                            lineTo(s5.x, s5.y)
-                            lineTo(s6.x, s6.y)
+                        fun toCanvasOffset(normX: Float, normY: Float): Offset {
+                            val localX = (normX - 500f) * baseScale + centerX
+                            val localY = (normY - 500f) * baseScale + centerY
+                            return Offset(localX, localY)
                         }
+
+                        fun toCanvasSize(w: Float, h: Float): Size {
+                            return Size(w * baseScale, h * baseScale)
+                        }
+
+                        // Light minimal map background
+                        drawRect(
+                            color = Color(0xFFF9FAFB),
+                            size = size
+                        )
+
+                        // Draw subtle campus boundary & lawns
+                        val sjtGround = toCanvasOffset(680f, 700f)
+                        drawRoundRect(
+                            color = Color(0xFFE2F3E7),
+                            topLeft = Offset(sjtGround.x - 75f * baseScale, sjtGround.y - 60f * baseScale),
+                            size = toCanvasSize(150f, 120f),
+                            cornerRadius = CornerRadius(20f * baseScale)
+                        )
+
+                        val openStadium = toCanvasOffset(510f, 145f)
+                        drawRoundRect(
+                            color = Color(0xFFF1EDE6),
+                            topLeft = Offset(openStadium.x - 60f * baseScale, openStadium.y - 45f * baseScale),
+                            size = toCanvasSize(120f, 90f),
+                            cornerRadius = CornerRadius(16f * baseScale)
+                        )
+
+                        // 5a. Custom blue translucent polygon overlay for "VIT Lake" with a stroke
+                        val lakePath = Path().apply {
+                            val pt1 = toCanvasOffset(405f, 680f)
+                            val pt2 = toCanvasOffset(450f, 640f)
+                            val pt3 = toCanvasOffset(520f, 630f)
+                            val pt4 = toCanvasOffset(600f, 660f)
+                            val pt5 = toCanvasOffset(650f, 715f)
+                            val pt6 = toCanvasOffset(610f, 770f)
+                            val pt7 = toCanvasOffset(535f, 785f)
+                            val pt8 = toCanvasOffset(465f, 765f)
+                            val pt9 = toCanvasOffset(420f, 730f)
+
+                            moveTo(pt1.x, pt1.y)
+                            quadraticTo(pt2.x, pt2.y, pt3.x, pt3.y)
+                            quadraticTo(pt4.x, pt4.y, pt5.x, pt5.y)
+                            quadraticTo(pt6.x, pt6.y, pt7.x, pt7.y)
+                            quadraticTo(pt8.x, pt8.y, pt9.x, pt9.y)
+                            close()
+                        }
+
+                        // Lake Fill (Translucent Blue #663B82F6)
                         drawPath(
-                            path = shuttleRoutePath,
-                            color = Color(0xFF8338EC),
-                            style = Stroke(width = 8f * baseScale, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                            path = lakePath,
+                            color = ColorLakeOverlay
                         )
-                    }
+                        // Lake Stroke (#2563EB)
+                        drawPath(
+                            path = lakePath,
+                            color = ColorLakeStroke,
+                            style = Stroke(width = 3.5f * baseScale)
+                        )
 
-                    // 6. Draw Preset Route Art Overlay
-                    if (uiState.layerMode == MapLayerMode.ROUTE_ART || uiState.selectedArtRoute != null) {
-                        val activeRoute = uiState.selectedArtRoute ?: VIT_CAMPUS_PRESET_ART_ROUTES.first()
-                        if (activeRoute.points.size >= 2) {
-                            val artPath = Path()
-                            val firstPt = toCanvasOffset(activeRoute.points[0].x, activeRoute.points[0].y)
-                            artPath.moveTo(firstPt.x, firstPt.y)
-                            for (i in 1 until activeRoute.points.size) {
-                                val nextPt = toCanvasOffset(activeRoute.points[i].x, activeRoute.points[i].y)
-                                artPath.lineTo(nextPt.x, nextPt.y)
-                            }
+                        // Minimalist internal roads
+                        val roadColor = Color(0xFFFFFFFF)
+                        val roadBorderColor = Color(0xFFE5E7EB)
 
-                            // Glowing background line
-                            drawPath(
-                                path = artPath,
-                                color = Color(activeRoute.themeColorHex).copy(alpha = 0.4f),
-                                style = Stroke(width = 16f * baseScale, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                            )
-                            // Solid art line
-                            drawPath(
-                                path = artPath,
-                                color = Color(activeRoute.themeColorHex),
-                                style = Stroke(width = 6f * baseScale, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                            )
+                        val mainRoad = Path().apply {
+                            val r1 = toCanvasOffset(30f, 620f)
+                            val r2 = toCanvasOffset(380f, 870f)
+                            val r3 = toCanvasOffset(710f, 925f)
+                            val r4 = toCanvasOffset(980f, 930f)
+                            moveTo(r1.x, r1.y)
+                            lineTo(r2.x, r2.y)
+                            lineTo(r3.x, r3.y)
+                            lineTo(r4.x, r4.y)
+                        }
+                        drawPath(path = mainRoad, color = roadBorderColor, style = Stroke(width = 16f * baseScale, cap = StrokeCap.Round))
+                        drawPath(path = mainRoad, color = roadColor, style = Stroke(width = 10f * baseScale, cap = StrokeCap.Round))
 
-                            // Point markers
-                            activeRoute.points.forEach { pt ->
-                                val p = toCanvasOffset(pt.x, pt.y)
-                                drawCircle(color = Color.White, radius = 6f * baseScale, center = p)
-                                drawCircle(color = Color(activeRoute.themeColorHex), radius = 4f * baseScale, center = p)
+                        val internalAvenues = Path().apply {
+                            val p1 = toCanvasOffset(110f, 600f) // Gate 1
+                            val p2 = toCanvasOffset(380f, 540f)
+                            val p3 = toCanvasOffset(520f, 520f)
+                            val p4 = toCanvasOffset(760f, 480f)
+                            val p5 = toCanvasOffset(960f, 440f)
+                            moveTo(p1.x, p1.y)
+                            lineTo(p2.x, p2.y)
+                            lineTo(p3.x, p3.y)
+                            lineTo(p4.x, p4.y)
+                            lineTo(p5.x, p5.y)
+
+                            val h1 = toCanvasOffset(270f, 210f)
+                            val h2 = toCanvasOffset(500f, 320f)
+                            val h3 = toCanvasOffset(720f, 210f)
+                            val h4 = toCanvasOffset(840f, 290f)
+                            moveTo(h1.x, h1.y)
+                            lineTo(h2.x, h2.y)
+                            lineTo(h3.x, h3.y)
+                            lineTo(h4.x, h4.y)
+                        }
+                        drawPath(path = internalAvenues, color = roadBorderColor, style = Stroke(width = 12f * baseScale, cap = StrokeCap.Round))
+                        drawPath(path = internalAvenues, color = roadColor, style = Stroke(width = 8f * baseScale, cap = StrokeCap.Round))
+
+                        // 5b. Show Purple Polyline for "Campus Walking Art Routes" (color: #7C3AED, width: 4)
+                        if (uiState.selectedLayerMode == MapLayerMode.ROUTE_ART || uiState.selectedLayerMode == MapLayerMode.STANDARD) {
+                            val activeRoute = uiState.selectedArtRoute
+                            if (activeRoute.canvasPoints.size >= 2) {
+                                val artPolyline = Path()
+                                val startP = toCanvasOffset(activeRoute.canvasPoints[0].x, activeRoute.canvasPoints[0].y)
+                                artPolyline.moveTo(startP.x, startP.y)
+                                for (i in 1 until activeRoute.canvasPoints.size) {
+                                    val nextP = toCanvasOffset(activeRoute.canvasPoints[i].x, activeRoute.canvasPoints[i].y)
+                                    artPolyline.lineTo(nextP.x, nextP.y)
+                                }
+
+                                // Soft glow
+                                drawPath(
+                                    path = artPolyline,
+                                    color = ColorAccentPurple.copy(alpha = 0.25f),
+                                    style = Stroke(width = 12f * baseScale, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                )
+                                // Solid Polyline (color: #7C3AED, width: 4dp equivalent)
+                                drawPath(
+                                    path = artPolyline,
+                                    color = ColorAccentPurple,
+                                    style = Stroke(width = 4f * baseScale, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                )
+
+                                // Route vertices
+                                activeRoute.canvasPoints.forEach { pt ->
+                                    val ptPos = toCanvasOffset(pt.x, pt.y)
+                                    drawCircle(color = Color.White, radius = 5f * baseScale, center = ptPos)
+                                    drawCircle(color = ColorAccentPurple, radius = 3f * baseScale, center = ptPos)
+                                }
                             }
                         }
-                    }
 
-                    // 7. Draw Building Footprints (Blocks from map)
-                    // Academic Blocks (Orange/Terracotta)
-                    drawBuildingBlock(toCanvasOffset(240f, 710f), 55f * baseScale, 55f * baseScale, Color(0xFFF4A261), "TT", baseScale)
-                    drawBuildingBlock(toCanvasOffset(710f, 570f), 65f * baseScale, 50f * baseScale, Color(0xFFF4A261), "SJT", baseScale)
-                    drawBuildingBlock(toCanvasOffset(860f, 520f), 80f * baseScale, 70f * baseScale, Color(0xFFE76F51), "PRP", baseScale)
-                    drawBuildingBlock(toCanvasOffset(160f, 650f), 50f * baseScale, 45f * baseScale, Color(0xFFF4A261), "MB", baseScale)
-                    drawBuildingBlock(toCanvasOffset(955f, 455f), 45f * baseScale, 38f * baseScale, Color(0xFFF4A261), "MACH", baseScale)
+                        // 5c. Custom markers for key buildings with colored circle backgrounds and white icons
+                        filteredBuildings.forEach { b ->
+                            val markerCenter = toCanvasOffset(b.normX, b.normY)
+                            val isSelected = b.id == uiState.selectedBuilding?.id
 
-                    // Men's Hostels (Teal / Green)
-                    drawBuildingBlock(toCanvasOffset(315f, 200f), 70f * baseScale, 45f * baseScale, Color(0xFF56B386), "MH-B", baseScale)
-                    drawBuildingBlock(toCanvasOffset(475f, 360f), 85f * baseScale, 45f * baseScale, Color(0xFF56B386), "MH-F", baseScale)
-                    drawBuildingBlock(toCanvasOffset(740f, 195f), 75f * baseScale, 45f * baseScale, Color(0xFF56B386), "MH-N", baseScale)
-                    drawBuildingBlock(toCanvasOffset(680f, 300f), 50f * baseScale, 40f * baseScale, Color(0xFF56B386), "MH-Q", baseScale)
-                    drawBuildingBlock(toCanvasOffset(660f, 365f), 55f * baseScale, 35f * baseScale, Color(0xFF56B386), "MH-R", baseScale)
-                    drawBuildingBlock(toCanvasOffset(830f, 280f), 45f * baseScale, 40f * baseScale, Color(0xFF56B386), "NHJ", baseScale)
+                            if (isSelected) {
+                                drawCircle(
+                                    color = b.color.copy(alpha = 0.3f),
+                                    radius = 24f * baseScale,
+                                    center = markerCenter
+                                )
+                            }
 
-                    // Parking Lots (Brown / Slate)
-                    drawRoundRect(
-                        color = Color(0xFF9E8279),
-                        topLeft = Offset(toCanvasOffset(785f, 720f).x - 45f * baseScale, toCanvasOffset(785f, 720f).y - 20f * baseScale),
-                        size = toCanvasSize(90f, 40f),
-                        cornerRadius = CornerRadius(8f * baseScale)
-                    )
-                    drawRoundRect(
-                        color = Color(0xFF836953),
-                        topLeft = Offset(toCanvasOffset(785f, 765f).x - 45f * baseScale, toCanvasOffset(785f, 765f).y - 20f * baseScale),
-                        size = toCanvasSize(90f, 40f),
-                        cornerRadius = CornerRadius(8f * baseScale)
-                    )
-
-                    // 8. Landmark Interactive Pins & Badges
-                    filteredLandmarks.forEach { lm ->
-                        val pos = toCanvasOffset(lm.x, lm.y)
-                        val isSelected = lm.id == uiState.selectedLandmark?.id
-
-                        if (isSelected) {
+                            // Marker Outer Shadow & White Rim
                             drawCircle(
-                                color = CampusAccentGreen.copy(alpha = 0.35f),
-                                radius = 28f * baseScale,
-                                center = pos
+                                color = Color(0x33000000),
+                                radius = (if (isSelected) 17f else 14f) * baseScale,
+                                center = Offset(markerCenter.x, markerCenter.y + 2f * baseScale)
+                            )
+                            drawCircle(
+                                color = Color.White,
+                                radius = (if (isSelected) 16f else 13f) * baseScale,
+                                center = markerCenter
+                            )
+
+                            // Marker Colored Circle
+                            drawCircle(
+                                color = b.color,
+                                radius = (if (isSelected) 13f else 10f) * baseScale,
+                                center = markerCenter
+                            )
+
+                            // Inner White dot/icon placeholder
+                            drawCircle(
+                                color = Color.White,
+                                radius = (if (isSelected) 5f else 4f) * baseScale,
+                                center = markerCenter
                             )
                         }
 
-                        // Outer ring
+                        // User Live Indicator
+                        val userLoc = toCanvasOffset(430f, 650f)
+                        drawCircle(
+                            color = Color(0xFF10B981).copy(alpha = pulseAlpha),
+                            radius = 20f * baseScale,
+                            center = userLoc
+                        )
                         drawCircle(
                             color = Color.White,
-                            radius = if (isSelected) 16f * baseScale else 12f * baseScale,
-                            center = pos
+                            radius = 9f * baseScale,
+                            center = userLoc
                         )
-                        // Inner colored node
                         drawCircle(
-                            color = Color(lm.colorHex),
-                            radius = if (isSelected) 11f * baseScale else 8f * baseScale,
-                            center = pos
+                            color = Color(0xFF10B981),
+                            radius = 6f * baseScale,
+                            center = userLoc
                         )
                     }
-
-                    // 9. Live User Location Pin ("You Are Here")
-                    val userPos = toCanvasOffset(uiState.userPosition.x, uiState.userPosition.y)
-                    drawCircle(
-                        color = AccentLavender.copy(alpha = pulseAlpha),
-                        radius = 26f * baseScale,
-                        center = userPos
-                    )
-                    drawCircle(
-                        color = Color.White,
-                        radius = 12f * baseScale,
-                        center = userPos
-                    )
-                    drawCircle(
-                        color = AccentLavender,
-                        radius = 7f * baseScale,
-                        center = userPos
-                    )
                 }
-            }
 
-            // Map Zoom Controls & Quick Center Tools (Right side floating pill)
-            Column(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Zoom In
-                Surface(
-                    shape = CircleShape,
-                    color = Color.White,
-                    shadowElevation = 3.dp,
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clickable { zoomScale = (zoomScale * 1.25f).coerceAtMost(3.5f) }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "Zoom In", tint = DarkSlatePrimary)
+                // Interactive building click targets overlay
+                val localDensity = androidx.compose.ui.platform.LocalDensity.current.density
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val canvasWidth = maxWidth.value
+                    val canvasHeight = maxHeight.value
+                    val baseScale = (canvasWidth / 1000f) * zoomScale
+                    val centerX = (canvasWidth / 2f) + (panOffsetX / localDensity)
+                    val centerY = (canvasHeight / 2f) + (panOffsetY / localDensity)
+
+                    filteredBuildings.forEach { b ->
+                        val localX = (b.normX - 500f) * baseScale + centerX
+                        val localY = (b.normY - 500f) * baseScale + centerY
+                        Box(
+                            modifier = Modifier
+                                .offset(x = (localX - 22).dp, y = (localY - 22).dp)
+                                .size(44.dp)
+                                .clickable {
+                                    viewModel.selectBuilding(b)
+                                }
+                        )
                     }
                 }
 
-                // Zoom Out
-                Surface(
-                    shape = CircleShape,
-                    color = Color.White,
-                    shadowElevation = 3.dp,
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clickable { zoomScale = (zoomScale / 1.25f).coerceAtLeast(0.75f) }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(imageVector = Icons.Default.Remove, contentDescription = "Zoom Out", tint = DarkSlatePrimary)
-                    }
-                }
-
-                // My Location Center
-                Surface(
-                    shape = CircleShape,
-                    color = AccentMintLight,
-                    shadowElevation = 3.dp,
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clickable {
-                            zoomScale = 1.2f
-                            panOffsetX = 0f
-                            panOffsetY = 0f
-                        }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(imageVector = Icons.Default.MyLocation, contentDescription = "My Location", tint = CampusAccentGreen)
-                    }
-                }
-            }
-
-            // Bottom Route Art / Landmark Detail Card
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            ) {
-                if (uiState.selectedLandmark != null) {
-                    val landmark = uiState.selectedLandmark!!
-                    val stepsFromUser = viewModel.calculateStepsFromUser(landmark)
-                    val distKm = viewModel.calculateDistanceKmFromUser(landmark)
-
+                // Building Callout Dialog / Bubble (when marker tapped)
+                if (uiState.selectedBuilding != null) {
+                    val building = uiState.selectedBuilding!!
                     Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color.White,
+                        shadowElevation = 6.dp,
+                        border = BorderStroke(1.dp, ColorBorder),
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(12.dp, RoundedCornerShape(24.dp)),
-                        shape = RoundedCornerShape(24.dp),
-                        color = Color.White
+                            .align(Alignment.TopCenter)
+                            .padding(top = 16.dp, start = 20.dp, end = 20.dp)
+                            .fillMaxWidth(0.9f)
+                            .testTag("building_callout")
                     ) {
-                        Column(
-                            modifier = Modifier.padding(18.dp)
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(building.color),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(landmark.colorHex).copy(alpha = 0.18f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(text = landmark.emoji, fontSize = 22.sp)
-                                    }
-                                    Column {
-                                        Text(
-                                            text = landmark.name,
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp
-                                            ),
-                                            color = DarkSlatePrimary
-                                        )
-                                        Text(
-                                            text = landmark.category.displayName,
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                                            color = TextMuted
-                                        )
-                                    }
+                                    Text(text = building.emoji, fontSize = 18.sp)
                                 }
-
-                                IconButton(
-                                    onClick = { viewModel.selectLandmark(null) },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Close",
-                                        tint = TextMuted,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = landmark.description,
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
-                                color = DarkSlatePrimary.copy(alpha = 0.8f)
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Distance & Steps Metric Chips
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Surface(
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MintBackground
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(text = "👟", fontSize = 14.sp)
-                                        Column {
-                                            Text(
-                                                text = "$stepsFromUser steps",
-                                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                                color = DarkSlatePrimary
-                                            )
-                                            Text(
-                                                text = "est. walk",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = TextMuted
-                                            )
-                                        }
-                                    }
-                                }
-
-                                Surface(
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MintBackground
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(text = "📍", fontSize = 14.sp)
-                                        Column {
-                                            Text(
-                                                text = "$distKm km",
-                                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                                color = DarkSlatePrimary
-                                            )
-                                            Text(
-                                                text = "from you",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = TextMuted
-                                            )
-                                        }
-                                    }
-                                }
-
-                                Surface(
-                                    modifier = Modifier.weight(1.2f),
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = AccentMintLight
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(text = "🎨", fontSize = 14.sp)
-                                        Column {
-                                            Text(
-                                                text = landmark.popularArtRoute,
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 10.sp
-                                                ),
-                                                color = DarkSlatePrimary,
-                                                maxLines = 1
-                                            )
-                                            Text(
-                                                text = "popular route",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                                                color = TextMuted
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Start GPS Walk Button
-                            Button(
-                                onClick = { onNavigateToTracker(landmark.popularArtRoute) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(46.dp)
-                                    .testTag("start_walk_from_landmark"),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = CampusNavyHeader,
-                                    contentColor = Color.White
-                                )
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.DirectionsWalk,
-                                        contentDescription = "Walk",
-                                        modifier = Modifier.size(18.dp)
+                                Column {
+                                    Text(
+                                        text = building.name,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp
+                                        ),
+                                        color = ColorDarkPrimary
                                     )
                                     Text(
-                                        text = "Start Walk Art from ${landmark.shortCode}",
-                                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                                        text = "${building.category.displayName} • ${building.popularArtRoute}",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                        color = ColorTextSecondary
                                     )
                                 }
                             }
-                        }
-                    }
-                } else if (uiState.layerMode == MapLayerMode.ROUTE_ART) {
-                    // Route Art Preset Selector Carousel
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(8.dp, RoundedCornerShape(20.dp)),
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.White
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                            IconButton(
+                                onClick = { viewModel.selectBuilding(null) },
+                                modifier = Modifier.size(28.dp)
                             ) {
-                                Text(
-                                    text = "🎨 Campus Walking Art Routes",
-                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = DarkSlatePrimary
-                                )
-                                Text(
-                                    text = "Tap to view on map",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                    color = TextMuted
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = ColorTextSecondary,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
+                        }
+                    }
+                }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                // Fullscreen Exit Floating Button if in Fullscreen Mode
+                if (uiState.isFullscreen) {
+                    IconButton(
+                        onClick = { viewModel.toggleFullscreen() },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .shadow(4.dp, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FullscreenExit,
+                            contentDescription = "Exit Fullscreen",
+                            tint = ColorDarkPrimary
+                        )
+                    }
+                }
 
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                modifier = Modifier.fillMaxWidth()
+                // 5d. Right Side: Vertical zoom in/out button stack (white circular buttons with +/- icons, subtle shadow)
+                // & Right side: green circular "locate me" button at bottom
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Zoom In Button
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White,
+                        shadowElevation = 4.dp,
+                        border = BorderStroke(1.dp, ColorBorder),
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .clickable { zoomScale = (zoomScale * 1.3f).coerceAtMost(4.0f) }
+                            .testTag("zoom_in_button")
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(imageVector = Icons.Default.Add, contentDescription = "Zoom In", tint = ColorDarkPrimary, modifier = Modifier.size(20.dp))
+                        }
+                    }
+
+                    // Zoom Out Button
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.White,
+                        shadowElevation = 4.dp,
+                        border = BorderStroke(1.dp, ColorBorder),
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .clickable { zoomScale = (zoomScale / 1.3f).coerceAtLeast(0.7f) }
+                            .testTag("zoom_out_button")
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(imageVector = Icons.Default.Remove, contentDescription = "Zoom Out", tint = ColorDarkPrimary, modifier = Modifier.size(20.dp))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Green Circular "Locate Me" Button
+                    Surface(
+                        shape = CircleShape,
+                        color = Color(0xFF10B981), // Green marker #10B981
+                        shadowElevation = 4.dp,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .clickable {
+                                // Smoothly center on user / lake
+                                zoomScale = 1.2f
+                                panOffsetX = 0f
+                                panOffsetY = 0f
+                            }
+                            .testTag("locate_me_button")
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.MyLocation,
+                                contentDescription = "Locate Me",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+
+                // 6. Bottom Route Cards (horizontal scrollable, peeking from bottom)
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                ) {
+                    // Header text: "Tap to view on map"
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Campus Walking Art Routes",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            ),
+                            color = ColorDarkPrimary
+                        )
+                        Text(
+                            text = "Tap to view on map",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = ColorTextSecondary
+                        )
+                    }
+
+                    // Horizontal Scrollable Route Cards (staggered / tilted for visual interest)
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        itemsIndexed(ART_ROUTES) { index, route ->
+                            val isSelected = uiState.selectedArtRoute.id == route.id
+                            // Slight tilt/stagger angle for visual interest (-1.5deg or 1.5deg)
+                            val tiltAngle = if (index % 2 == 0) -1.2f else 1.2f
+
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color.White,
+                                shadowElevation = if (isSelected) 6.dp else 2.dp,
+                                border = if (isSelected) BorderStroke(1.5.dp, ColorAccentPurple) else BorderStroke(1.dp, ColorBorder),
+                                modifier = Modifier
+                                    .width(220.dp)
+                                    .rotate(tiltAngle)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable {
+                                        viewModel.selectArtRoute(route)
+                                        // Smooth zoom/center to this route
+                                        zoomScale = 1.3f
+                                    }
+                                    .testTag("route_card_${route.id}")
                             ) {
-                                items(VIT_CAMPUS_PRESET_ART_ROUTES) { artRoute ->
-                                    val isSelected = uiState.selectedArtRoute?.id == artRoute.id
-                                    Surface(
-                                        shape = RoundedCornerShape(14.dp),
-                                        color = if (isSelected) Color(artRoute.themeColorHex).copy(alpha = 0.15f) else MintBackground,
-                                        border = if (isSelected) BorderStroke(1.5.dp, Color(artRoute.themeColorHex)) else null,
-                                        modifier = Modifier
-                                            .width(210.dp)
-                                            .clickable { viewModel.selectArtRoute(artRoute) }
+                                Column(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        Column(
-                                            modifier = Modifier.padding(10.dp)
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                            ) {
-                                                Text(text = artRoute.emoji, fontSize = 16.sp)
-                                                Text(
-                                                    text = artRoute.name,
-                                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                                    color = DarkSlatePrimary,
-                                                    maxLines = 1
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                text = "${artRoute.distanceKm} km • ~${artRoute.estimatedMinutes} mins",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = TextMuted
-                                            )
-                                            Spacer(modifier = Modifier.height(6.dp))
-                                            Button(
-                                                onClick = { onNavigateToTracker(artRoute.name) },
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(32.dp),
-                                                shape = RoundedCornerShape(8.dp),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color(artRoute.themeColorHex),
-                                                    contentColor = Color.White
-                                                ),
-                                                contentPadding = PaddingValues(0.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Walk This Route",
-                                                    style = MaterialTheme.typography.labelSmall.copy(
-                                                        fontWeight = FontWeight.Bold,
-                                                        fontSize = 11.sp
+                                        // Small emoji icon (🎨 for art routes)
+                                        Text(text = route.emoji, fontSize = 16.sp)
+                                        // Title: bold (font-weight: 700, size: 15)
+                                        Text(
+                                            text = route.title,
+                                            style = MaterialTheme.typography.titleSmall.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 15.sp
+                                            ),
+                                            color = ColorDarkPrimary,
+                                            maxLines = 1
+                                        )
+                                    }
+
+                                    // Subtitle: "2.4 km • ~28 mins" in gray
+                                    Text(
+                                        text = "${route.distanceKm} km • ~${route.durationMins} mins",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontSize = 12.sp
+                                        ),
+                                        color = ColorTextSecondary
+                                    )
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    // Full-width gradient button at bottom: "Walk This Route" with purple->blue gradient
+                                    Button(
+                                        onClick = { onNavigateToTracker(route.title) },
+                                        shape = RoundedCornerShape(16.dp),
+                                        contentPadding = PaddingValues(0.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color.Transparent
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(38.dp)
+                                            .background(
+                                                Brush.horizontalGradient(
+                                                    colors = listOf(
+                                                        Color(0xFF7C3AED), // Vibrant Purple #7C3AED
+                                                        Color(0xFF3B82F6)  // Vibrant Blue #3B82F6
                                                     )
-                                                )
-                                            }
-                                        }
+                                                ),
+                                                shape = RoundedCornerShape(16.dp)
+                                            )
+                                            .testTag("walk_route_button_${route.id}")
+                                    ) {
+                                        Text(
+                                            text = "Walk This Route",
+                                            style = MaterialTheme.typography.labelMedium.copy(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 13.sp
+                                            ),
+                                            color = Color.White
+                                        )
                                     }
                                 }
                             }
@@ -947,39 +881,4 @@ fun CampusMapScreen(
             }
         }
     }
-}
-
-// Draw Building Helper on Canvas
-private fun DrawScope.drawBuildingBlock(
-    center: Offset,
-    width: Float,
-    height: Float,
-    color: Color,
-    label: String,
-    scale: Float
-) {
-    // Drop shadow
-    drawRoundRect(
-        color = Color(0x22000000),
-        topLeft = Offset(center.x - width / 2 + 2f * scale, center.y - height / 2 + 2f * scale),
-        size = Size(width, height),
-        cornerRadius = CornerRadius(6f * scale)
-    )
-
-    // Building body
-    drawRoundRect(
-        color = color,
-        topLeft = Offset(center.x - width / 2, center.y - height / 2),
-        size = Size(width, height),
-        cornerRadius = CornerRadius(6f * scale)
-    )
-
-    // White accent rooftop border
-    drawRoundRect(
-        color = Color.White.copy(alpha = 0.5f),
-        topLeft = Offset(center.x - width / 2 + 3f * scale, center.y - height / 2 + 3f * scale),
-        size = Size(width - 6f * scale, height - 6f * scale),
-        cornerRadius = CornerRadius(4f * scale),
-        style = Stroke(width = 1.5f * scale)
-    )
 }

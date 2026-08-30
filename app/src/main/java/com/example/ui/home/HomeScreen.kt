@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.model.WalkRouteEntity
@@ -70,6 +71,7 @@ fun HomeScreen(
     if (showSyncDialog) {
         AlertDialog(
             onDismissRequest = { showSyncDialog = false },
+            shape = RoundedCornerShape(16.dp),
             title = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -78,12 +80,13 @@ fun HomeScreen(
                     Icon(
                         imageVector = Icons.Default.CloudSync,
                         contentDescription = "Sync Status",
-                        tint = AccentMint
+                        tint = ElectricPurple
                     )
                     Text(
                         text = "Sync Diagnostics & Status",
                         style = MaterialTheme.typography.titleMedium,
-                        color = DarkSlatePrimary
+                        fontWeight = FontWeight.SemiBold,
+                        color = NearBlackInk
                     )
                 }
             },
@@ -95,7 +98,7 @@ fun HomeScreen(
                     // Local SQLite Room Health
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = SurfaceCardMuted,
+                        color = MutedSurface,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -106,14 +109,14 @@ fun HomeScreen(
                                 Text(text = "💾", fontSize = 16.sp)
                                 Text(
                                     text = "Local Storage (Room DB): Active & Safe",
-                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = DarkSlatePrimary
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = NearBlackInk
                                 )
                             }
                             Text(
                                 text = "All ${uiState.routes.size} recorded walk routes, custom pigments, explorer XP, and unlocked badges are stored on your device.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = DarkSlateSecondary
+                                color = TextSecondary
                             )
                         }
                     }
@@ -122,9 +125,9 @@ fun HomeScreen(
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = when (val state = uiState.syncState) {
-                            is com.example.data.sync.SyncState.Success -> if (state.isCloudSynced) AccentMintLight else AccentLavenderLight
+                            is com.example.data.sync.SyncState.Success -> if (state.isCloudSynced) AccentMintLight else ElectricPurpleLight
                             is com.example.data.sync.SyncState.Error -> Color(0xFFFFEBEE)
-                            else -> SurfaceCardMuted
+                            else -> MutedSurface
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -136,8 +139,8 @@ fun HomeScreen(
                                 Text(text = "☁️", fontSize = 16.sp)
                                 Text(
                                     text = "Firebase Cloud Sync Status",
-                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = DarkSlatePrimary
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = NearBlackInk
                                 )
                             }
                             Text(
@@ -148,7 +151,7 @@ fun HomeScreen(
                                     else -> "Tap 'Sync Now' to test connection and synchronize with Firestore Cloud."
                                 },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = DarkSlateSecondary
+                                color = TextSecondary
                             )
                         }
                     }
@@ -195,7 +198,7 @@ fun HomeScreen(
                                             },
                                             contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
-                                            Text("Copy", color = AccentMint, fontSize = 11.sp)
+                                            Text("Copy", color = ElectricPurpleLight, fontSize = 11.sp)
                                         }
 
                                         TextButton(
@@ -249,8 +252,9 @@ fun HomeScreen(
                         viewModel.syncFirestore()
                     },
                     enabled = !isSyncing,
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isError) Color(0xFFD32F2F) else BlackPill
+                        containerColor = if (isError) Color(0xFFDC2626) else ElectricPurple
                     ),
                     modifier = Modifier.testTag("dialog_retry_sync_button")
                 ) {
@@ -264,7 +268,7 @@ fun HomeScreen(
                                 strokeWidth = 2.dp,
                                 color = Color.White
                             )
-                            Text(text = "Syncing...", color = Color.White)
+                            Text(text = "Syncing...", color = Color.White, fontWeight = FontWeight.SemiBold)
                         } else {
                             Icon(
                                 imageVector = if (isError) Icons.Default.Refresh else Icons.Default.CloudSync,
@@ -274,7 +278,8 @@ fun HomeScreen(
                             )
                             Text(
                                 text = if (isError) "Retry Cloud Sync" else "Run Sync",
-                                color = Color.White
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -282,7 +287,7 @@ fun HomeScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showSyncDialog = false }) {
-                    Text(text = "Close", color = DarkSlateSecondary)
+                    Text(text = "Close", color = TextSecondary, fontWeight = FontWeight.Medium)
                 }
             }
         )
@@ -292,14 +297,20 @@ fun HomeScreen(
     if (showMenuDialog) {
         AlertDialog(
             onDismissRequest = { showMenuDialog = false },
+            shape = RoundedCornerShape(16.dp),
             title = {
-                Text("Campus Navigation & Tools", style = MaterialTheme.typography.titleMedium, color = DarkSlatePrimary)
+                Text(
+                    "Campus Navigation & Tools",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = NearBlackInk
+                )
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = SurfaceCardMuted,
+                        color = MutedSurface,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
@@ -312,14 +323,14 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Default.DirectionsWalk, contentDescription = null, tint = AccentMint)
-                            Text("Start GPS Walk Tracker", style = MaterialTheme.typography.labelLarge, color = DarkSlatePrimary)
+                            Icon(Icons.Default.DirectionsWalk, contentDescription = null, tint = ElectricPurple)
+                            Text("Start GPS Walk Tracker", style = MaterialTheme.typography.labelLarge, color = NearBlackInk)
                         }
                     }
 
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = SurfaceCardMuted,
+                        color = MutedSurface,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
@@ -332,14 +343,14 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Default.CloudSync, contentDescription = null, tint = AccentLavender)
-                            Text("Sync Diagnostics & Cloud", style = MaterialTheme.typography.labelLarge, color = DarkSlatePrimary)
+                            Icon(Icons.Default.CloudSync, contentDescription = null, tint = ElectricPurple)
+                            Text("Sync Diagnostics & Cloud", style = MaterialTheme.typography.labelLarge, color = NearBlackInk)
                         }
                     }
 
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = SurfaceCardMuted,
+                        color = MutedSurface,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
@@ -352,22 +363,22 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Default.Person, contentDescription = null, tint = DarkSlateSecondary)
-                            Text("Profile & Achievements", style = MaterialTheme.typography.labelLarge, color = DarkSlatePrimary)
+                            Icon(Icons.Default.Person, contentDescription = null, tint = TextSecondary)
+                            Text("Profile & Achievements", style = MaterialTheme.typography.labelLarge, color = NearBlackInk)
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showMenuDialog = false }) {
-                    Text("Close", color = DarkSlateSecondary)
+                    Text("Close", color = TextSecondary, fontWeight = FontWeight.Medium)
                 }
             }
         )
     }
 
     Scaffold(
-        containerColor = MintBackground,
+        containerColor = SoftWhiteBackground,
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
         Column(
@@ -381,18 +392,18 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 18.dp),
+                    .padding(bottom = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Circular White Back Button `<`
                 Surface(
                     shape = CircleShape,
-                    color = SurfaceCard,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                    color = PureWhiteSurface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
                     shadowElevation = 0.5.dp,
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
                         .clickable { onNavigateToTracker() }
                         .testTag("top_back_button")
@@ -401,7 +412,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = DarkSlatePrimary,
+                            tint = NearBlackInk,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -410,11 +421,11 @@ fun HomeScreen(
                 // Circular White Hamburger Menu Button `☰`
                 Surface(
                     shape = CircleShape,
-                    color = SurfaceCard,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                    color = PureWhiteSurface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
                     shadowElevation = 0.5.dp,
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
                         .clickable { showMenuDialog = true }
                         .testTag("top_menu_button")
@@ -423,14 +434,14 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.Menu,
                             contentDescription = "Menu",
-                            tint = DarkSlatePrimary,
+                            tint = NearBlackInk,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
 
-            // 2. Header Title: "Your artworks ✦"
+            // 2. Header Title: "Your artworks ✦" (Plus Jakarta Sans ExtraBold 800)
             Row(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -438,22 +449,23 @@ fun HomeScreen(
                 Text(
                     text = "Your artworks",
                     style = MaterialTheme.typography.displayLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 33.sp,
-                        letterSpacing = (-0.5).sp
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 32.sp,
+                        lineHeight = 38.sp,
+                        letterSpacing = (-0.02).em
                     ),
-                    color = DarkSlatePrimary
+                    color = NearBlackInk
                 )
-                // Teal 4-point sparkle star ✦
+                // Electric Purple 4-point sparkle star ✦
                 Text(
                     text = "✦",
                     fontSize = 20.sp,
-                    color = SparkleTeal,
+                    color = ElectricPurple,
                     modifier = Modifier.padding(top = 2.dp)
                 )
             }
 
-            // Subtitle: "Every walk. Every art." with green ribbon squiggle ~
+            // Subtitle: "Every walk. Every art." with gentle purple ribbon squiggle ~
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -463,12 +475,13 @@ fun HomeScreen(
                     text = "Every walk. Every art.",
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontSize = 15.sp,
+                        lineHeight = 24.sp,
                         color = TextMuted
                     )
                 )
 
-                // Stylized green ribbon squiggle curve ~
-                Canvas(modifier = Modifier.size(width = 46.dp, height = 12.dp)) {
+                // Stylized ribbon squiggle curve ~
+                Canvas(modifier = Modifier.size(width = 44.dp, height = 12.dp)) {
                     val path = Path().apply {
                         moveTo(2f, size.height * 0.7f)
                         cubicTo(
@@ -479,7 +492,7 @@ fun HomeScreen(
                     }
                     drawPath(
                         path = path,
-                        color = SparkleTeal,
+                        color = ElectricPurple.copy(alpha = 0.7f),
                         style = Stroke(
                             width = 2.5f,
                             cap = StrokeCap.Round,
@@ -499,25 +512,25 @@ fun HomeScreen(
                 // All Pill
                 val isAllSelected = uiState.selectedFilter == HomeFilter.ALL
                 Surface(
-                    shape = RoundedCornerShape(22.dp),
-                    color = if (isAllSelected) SoftMintPill else SurfaceCard,
-                    border = if (isAllSelected) null else androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isAllSelected) ElectricPurpleLight else PureWhiteSurface,
+                    border = if (isAllSelected) androidx.compose.foundation.BorderStroke(1.dp, ElectricPurple.copy(alpha = 0.3f)) else androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
                     modifier = Modifier
-                        .clip(RoundedCornerShape(22.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable { viewModel.setFilter(HomeFilter.ALL) }
                         .testTag("filter_all_button")
                 ) {
                     Box(
-                        modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "All",
                             style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Medium,
+                                fontWeight = if (isAllSelected) FontWeight.SemiBold else FontWeight.Medium,
                                 fontSize = 14.sp
                             ),
-                            color = DarkSlatePrimary
+                            color = if (isAllSelected) ElectricPurple else NearBlackInk
                         )
                     }
                 }
@@ -525,11 +538,11 @@ fun HomeScreen(
                 // Favorites Pill
                 val isFavSelected = uiState.selectedFilter == HomeFilter.FAVORITES
                 Surface(
-                    shape = RoundedCornerShape(22.dp),
-                    color = if (isFavSelected) SoftMintPill else SurfaceCard,
-                    border = if (isFavSelected) null else androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (isFavSelected) ElectricPurpleLight else PureWhiteSurface,
+                    border = if (isFavSelected) androidx.compose.foundation.BorderStroke(1.dp, ElectricPurple.copy(alpha = 0.3f)) else androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
                     modifier = Modifier
-                        .clip(RoundedCornerShape(22.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable { viewModel.setFilter(HomeFilter.FAVORITES) }
                         .testTag("filter_favorites_button")
                 ) {
@@ -541,35 +554,36 @@ fun HomeScreen(
                         Icon(
                             imageVector = if (isFavSelected) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = null,
-                            tint = if (isFavSelected) AccentLavender else TextMuted,
+                            tint = if (isFavSelected) ElectricPurple else TextMuted,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = "Favorites",
                             style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = if (isFavSelected) FontWeight.Bold else FontWeight.Medium,
+                                fontWeight = if (isFavSelected) FontWeight.SemiBold else FontWeight.Medium,
                                 fontSize = 14.sp
                             ),
-                            color = DarkSlatePrimary
+                            color = if (isFavSelected) ElectricPurple else NearBlackInk
                         )
                         if (uiState.favoriteRoutes.isNotEmpty()) {
                             Text(
                                 text = "(${uiState.favoriteRoutes.size})",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TextMuted
+                                color = if (isFavSelected) ElectricPurple else TextMuted
                             )
                         }
                     }
                 }
             }
 
-            // 4. Hero Card: "TODAY'S ARTWORK"
+            // 4. Hero Card: "TODAY'S ARTWORK" - Free, light, clean UI with zero compressed text
             val todaysRoute = uiState.todaysRoute
             if (todaysRoute != null && uiState.selectedFilter == HomeFilter.ALL) {
                 Surface(
-                    shape = RoundedCornerShape(28.dp),
-                    color = HeroCardMint,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                    shape = RoundedCornerShape(16.dp),
+                    color = PureWhiteSurface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
+                    shadowElevation = 0.5.dp,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 24.dp)
@@ -583,25 +597,27 @@ fun HomeScreen(
                         // Top Section: Left Details & Right Square Artwork Card
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Left Details Column
                             Column(
-                                modifier = Modifier.weight(1.15f),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
                                     text = "TODAY'S ARTWORK",
                                     style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.Medium,
                                         fontSize = 11.sp,
                                         letterSpacing = 0.6.sp
                                     ),
-                                    color = HeroTealTag
+                                    color = ElectricPurple
                                 )
 
-                                // Bold Multi-line Date
+                                // Big Display Date (ExtraBold 800)
                                 val dateParts = todaysRoute.dateString.split(" ")
                                 val dateLine1 = if (dateParts.size >= 2) "${dateParts[0]} ${dateParts[1]}" else todaysRoute.dateString
                                 val dateLine2 = if (dateParts.size >= 3) dateParts[2] else ""
@@ -612,9 +628,10 @@ fun HomeScreen(
                                         style = MaterialTheme.typography.titleLarge.copy(
                                             fontWeight = FontWeight.ExtraBold,
                                             fontSize = 24.sp,
-                                            lineHeight = 28.sp
+                                            lineHeight = 30.sp,
+                                            letterSpacing = (-0.02).em
                                         ),
-                                        color = DarkSlatePrimary
+                                        color = NearBlackInk
                                     )
                                     if (dateLine2.isNotEmpty()) {
                                         Text(
@@ -622,130 +639,31 @@ fun HomeScreen(
                                             style = MaterialTheme.typography.titleLarge.copy(
                                                 fontWeight = FontWeight.ExtraBold,
                                                 fontSize = 24.sp,
-                                                lineHeight = 28.sp
+                                                lineHeight = 30.sp,
+                                                letterSpacing = (-0.02).em
                                             ),
-                                            color = DarkSlatePrimary
+                                            color = NearBlackInk
                                         )
                                     }
                                 }
 
                                 Text(
                                     text = "Created from your ${todaysRoute.distanceKm} km • ${todaysRoute.durationMinutes} min journey",
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = 13.sp,
+                                        lineHeight = 19.sp
+                                    ),
                                     color = TextMuted
                                 )
-
-                                Spacer(modifier = Modifier.height(2.dp))
-
-                                // Metrics Chips Row (Steps, Distance & Duration)
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    // Steps
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(26.dp)
-                                                .clip(CircleShape)
-                                                .background(AccentMintLight),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(text = "👟", fontSize = 11.sp)
-                                        }
-                                        Column {
-                                            Text(
-                                                text = "${todaysRoute.steps}",
-                                                style = MaterialTheme.typography.labelLarge.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 13.sp
-                                                ),
-                                                color = DarkSlatePrimary
-                                            )
-                                            Text(
-                                                text = "steps",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = TextMuted
-                                            )
-                                        }
-                                    }
-
-                                    // Distance
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(26.dp)
-                                                .clip(CircleShape)
-                                                .background(AccentMintLight),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(text = "📍", fontSize = 11.sp)
-                                        }
-                                        Column {
-                                            Text(
-                                                text = "${todaysRoute.distanceKm}",
-                                                style = MaterialTheme.typography.labelLarge.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 13.sp
-                                                ),
-                                                color = DarkSlatePrimary
-                                            )
-                                            Text(
-                                                text = "km",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = TextMuted
-                                            )
-                                        }
-                                    }
-
-                                    // Duration
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(26.dp)
-                                                .clip(CircleShape)
-                                                .background(AccentLavenderContainer),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(text = "⏱️", fontSize = 11.sp)
-                                        }
-                                        Column {
-                                            Text(
-                                                text = "${todaysRoute.durationMinutes}m",
-                                                style = MaterialTheme.typography.labelLarge.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 13.sp
-                                                ),
-                                                color = DarkSlatePrimary
-                                            )
-                                            Text(
-                                                text = "time",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = TextMuted
-                                            )
-                                        }
-                                    }
-                                }
                             }
 
                             // Right Square Artwork Preview Card
                             Surface(
-                                shape = RoundedCornerShape(22.dp),
-                                color = SurfaceCard,
-                                shadowElevation = 1.dp,
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White),
+                                shape = RoundedCornerShape(14.dp),
+                                color = MutedSurface,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
                                 modifier = Modifier
-                                    .weight(0.95f)
-                                    .aspectRatio(1f)
+                                    .size(104.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -753,12 +671,12 @@ fun HomeScreen(
                                         .background(
                                             Brush.linearGradient(
                                                 colors = listOf(
-                                                    AccentMintLight.copy(alpha = 0.6f),
-                                                    AccentLavenderLight.copy(alpha = 0.6f)
+                                                    ElectricPurpleLight.copy(alpha = 0.6f),
+                                                    AccentMintLight.copy(alpha = 0.4f)
                                                 )
                                             )
                                         )
-                                        .padding(8.dp)
+                                        .padding(6.dp)
                                 ) {
                                     // Artwork Canvas View
                                     ArtCanvasView(
@@ -771,33 +689,162 @@ fun HomeScreen(
                                     // Sparkles on canvas frame
                                     Text(
                                         text = "✦",
-                                        color = SparkleTeal,
-                                        fontSize = 14.sp,
+                                        color = ElectricPurple,
+                                        fontSize = 13.sp,
                                         modifier = Modifier.align(Alignment.TopEnd)
                                     )
                                     Text(
                                         text = "✦",
-                                        color = SparkleTeal,
-                                        fontSize = 12.sp,
+                                        color = ElectricPurple,
+                                        fontSize = 11.sp,
                                         modifier = Modifier.align(Alignment.BottomStart)
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        // Full-Width Purple Pill Button: "View artwork ->"
+                        // Full-Width 3-Column Metrics Row (Steps, Distance & Duration) - Clean, spacious, uncompressed!
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Steps Stat Box
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MutedSurface,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(ElectricPurpleLight),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = "👟", fontSize = 12.sp)
+                                    }
+                                    Column {
+                                        Text(
+                                            text = "${todaysRoute.steps}",
+                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 13.sp
+                                            ),
+                                            color = NearBlackInk,
+                                            maxLines = 1
+                                        )
+                                        Text(
+                                            text = "steps",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            color = TextMuted,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Distance Stat Box
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MutedSurface,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(AccentMintLight),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = "📍", fontSize = 12.sp)
+                                    }
+                                    Column {
+                                        Text(
+                                            text = "${todaysRoute.distanceKm}",
+                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 13.sp
+                                            ),
+                                            color = NearBlackInk,
+                                            maxLines = 1
+                                        )
+                                        Text(
+                                            text = "km",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            color = TextMuted,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Duration Stat Box
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MutedSurface,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(ElectricPurpleLight),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = "⏱️", fontSize = 12.sp)
+                                    }
+                                    Column {
+                                        Text(
+                                            text = "${todaysRoute.durationMinutes}m",
+                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 13.sp
+                                            ),
+                                            color = NearBlackInk,
+                                            maxLines = 1
+                                        )
+                                        Text(
+                                            text = "mins",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            color = TextMuted,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Full-Width Electric Purple Pill Button: "View artwork ->" (SemiBold 600)
                         Button(
                             onClick = { onNavigateToStudio(todaysRoute.id) },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = AccentLavender
+                                containerColor = ElectricPurple
                             ),
-                            shape = RoundedCornerShape(24.dp),
+                            shape = RoundedCornerShape(14.dp),
                             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp)
+                                .height(48.dp)
                                 .testTag("view_artwork_button")
                         ) {
                             Row(
@@ -837,9 +884,10 @@ fun HomeScreen(
                     text = "Your creations",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
+                        fontSize = 20.sp,
+                        letterSpacing = (-0.01).em
                     ),
-                    color = DarkSlatePrimary
+                    color = NearBlackInk
                 )
 
                 Text(
@@ -848,7 +896,7 @@ fun HomeScreen(
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     ),
-                    color = AccentLavender,
+                    color = ElectricPurple,
                     modifier = Modifier
                         .clickable { isViewAllGrid = !isViewAllGrid }
                         .testTag("view_all_creations_toggle")
@@ -871,7 +919,8 @@ fun HomeScreen(
                         Text(
                             text = if (uiState.selectedFilter == HomeFilter.FAVORITES) "No favorite artworks yet" else "No walking art recorded yet",
                             style = MaterialTheme.typography.titleMedium,
-                            color = DarkSlatePrimary
+                            fontWeight = FontWeight.SemiBold,
+                            color = NearBlackInk
                         )
                         Text(
                             text = "Walk around campus to create your next digital masterpiece!",
@@ -881,7 +930,7 @@ fun HomeScreen(
                     }
                 }
             } else if (!isViewAllGrid) {
-                // Horizontal Carousel matching the 4 cards in image.png
+                // Horizontal Carousel
                 LazyRow(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -933,9 +982,10 @@ fun HomeScreen(
 
             // Monthly Summary Banner
             Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = SurfaceCard,
-                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                shape = RoundedCornerShape(16.dp),
+                color = PureWhiteSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
+                shadowElevation = 0.5.dp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
@@ -955,13 +1005,13 @@ fun HomeScreen(
                             modifier = Modifier
                                 .size(42.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(AccentMintLight),
+                                .background(ElectricPurpleLight),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CalendarMonth,
                                 contentDescription = null,
-                                tint = AccentMint,
+                                tint = ElectricPurple,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -969,7 +1019,8 @@ fun HomeScreen(
                             Text(
                                 text = "February 2024",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = DarkSlatePrimary
+                                fontWeight = FontWeight.SemiBold,
+                                color = NearBlackInk
                             )
                             Text(
                                 text = "${uiState.routes.size} walks • ${uiState.routes.size} artworks",
@@ -983,23 +1034,23 @@ fun HomeScreen(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(AccentMintLight),
+                            .background(ElectricPurpleLight),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Place,
                             contentDescription = null,
-                            tint = AccentMint,
+                            tint = ElectricPurple,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
 
-            // "Places you visited" Purple Gradient Card
+            // "Places you visited" Electric Purple Gradient Card
             Surface(
-                shape = RoundedCornerShape(22.dp),
-                color = AccentLavender,
+                shape = RoundedCornerShape(16.dp),
+                color = ElectricPurple,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onNavigateToTracker() }
@@ -1016,17 +1067,20 @@ fun HomeScreen(
                         Text(
                             text = "This month",
                             style = MaterialTheme.typography.labelMedium,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = Color.White.copy(alpha = 0.85f)
                         )
                         Text(
                             text = "Places you visited",
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = (-0.01).em
+                            ),
                             color = Color.White
                         )
                         Text(
                             text = "7 campus zones explored",
                             style = MaterialTheme.typography.labelSmall,
-                            color = AccentLavenderLight
+                            color = ElectricPurpleLight
                         )
                     }
 
@@ -1056,8 +1110,9 @@ fun HomeScreen(
         val routeToShare = sharingRoute!!
         Dialog(onDismissRequest = { sharingRoute = null }) {
             Surface(
-                shape = RoundedCornerShape(28.dp),
-                color = SurfaceCard,
+                shape = RoundedCornerShape(16.dp),
+                color = PureWhiteSurface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 12.dp)
@@ -1077,7 +1132,8 @@ fun HomeScreen(
                         Text(
                             text = "Share Path Artwork",
                             style = MaterialTheme.typography.titleMedium,
-                            color = DarkSlatePrimary
+                            fontWeight = FontWeight.SemiBold,
+                            color = NearBlackInk
                         )
                         IconButton(onClick = { sharingRoute = null }) {
                             Icon(Icons.Default.Close, contentDescription = "Close", tint = TextMuted)
@@ -1116,10 +1172,11 @@ fun HomeScreen(
                             }
                         },
                         enabled = !isSharingProgress,
-                        colors = ButtonDefaults.buttonColors(containerColor = AccentLavender),
-                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = ElectricPurple),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(48.dp)
                             .testTag("home_modal_share_image_button")
                     ) {
                         Row(
@@ -1132,10 +1189,10 @@ fun HomeScreen(
                                     strokeWidth = 2.dp,
                                     color = Color.White
                                 )
-                                Text("Preparing Image...", color = Color.White)
+                                Text("Preparing Image...", color = Color.White, fontWeight = FontWeight.SemiBold)
                             } else {
                                 Icon(Icons.Default.Share, contentDescription = null, tint = Color.White)
-                                Text("Share to WhatsApp / Instagram", color = Color.White)
+                                Text("Share to WhatsApp / Instagram", color = Color.White, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -1156,11 +1213,11 @@ fun HomeScreen(
                                 context.startActivity(Intent.createChooser(textIntent, "Share text summary"))
                                 sharingRoute = null
                             },
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder)
                         ) {
-                            Text("Share Text", color = DarkSlatePrimary, fontSize = 12.sp)
+                            Text("Share Text", color = NearBlackInk, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                         }
 
                         OutlinedButton(
@@ -1169,11 +1226,11 @@ fun HomeScreen(
                                 clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(caption))
                                 android.widget.Toast.makeText(context, "Caption copied to clipboard!", android.widget.Toast.LENGTH_SHORT).show()
                             },
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SubtleBorder)
                         ) {
-                            Text("Copy Caption", color = DarkSlatePrimary, fontSize = 12.sp)
+                            Text("Copy Caption", color = NearBlackInk, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                         }
                     }
 
@@ -1185,7 +1242,7 @@ fun HomeScreen(
                             onNavigateToStudio(id)
                         }
                     ) {
-                        Text("Customize in Coloring Studio ➔", color = DarkSlateSecondary, fontSize = 12.sp)
+                        Text("Customize in Coloring Studio ➔", color = ElectricPurple, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
