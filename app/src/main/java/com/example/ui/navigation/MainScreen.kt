@@ -71,7 +71,7 @@ fun MainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -101,28 +101,40 @@ fun MainScreen(
                             testTag = "nav_artworks"
                         )
 
-                        // 3. Canvas Tab
-                        val isCanvas = currentRoute == Screen.Canvas.route
+                        // 3. Quests Tab
+                        val isQuests = currentRoute == Screen.Challenges.route
                         BottomNavItem(
-                            icon = if (isCanvas) Icons.Filled.Palette else Icons.Outlined.Palette,
-                            label = "Canvas",
-                            isSelected = isCanvas,
+                            icon = if (isQuests) Icons.Filled.EmojiEvents else Icons.Outlined.EmojiEvents,
+                            label = "Quests",
+                            isSelected = isQuests,
                             onClick = {
-                                navController.navigate(Screen.Canvas.route)
+                                navController.navigate(Screen.Challenges.route)
                             },
-                            testTag = "nav_canvas"
+                            testTag = "nav_quests"
                         )
 
-                        // 4. Map Tab
-                        val isMap = currentRoute == Screen.Map.route
+                        // 4. Store Tab
+                        val isStore = currentRoute == Screen.Store.route
                         BottomNavItem(
-                            icon = if (isMap) Icons.Filled.Map else Icons.Outlined.Map,
-                            label = "Map",
-                            isSelected = isMap,
+                            icon = if (isStore) Icons.Filled.ShoppingBag else Icons.Outlined.ShoppingBag,
+                            label = "Store",
+                            isSelected = isStore,
                             onClick = {
-                                navController.navigate(Screen.Map.route)
+                                navController.navigate(Screen.Store.route)
                             },
-                            testTag = "nav_map"
+                            testTag = "nav_store"
+                        )
+
+                        // 5. Profile Tab
+                        val isProfile = currentRoute == Screen.Profile.route
+                        BottomNavItem(
+                            icon = if (isProfile) Icons.Filled.Person else Icons.Outlined.Person,
+                            label = "Profile",
+                            isSelected = isProfile,
+                            onClick = {
+                                navController.navigate(Screen.Profile.route)
+                            },
+                            testTag = "nav_profile"
                         )
                     }
                 }
@@ -280,14 +292,14 @@ private fun BottomNavItem(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .background(if (isSelected) Color(0xFFECFDF5) else Color.Transparent)
-                .padding(horizontal = 14.dp, vertical = 4.dp),
+                .background(if (isSelected) Color(0xFFF3F0FC) else Color.Transparent)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isSelected) Color(0xFF059669) else Color(0xFF9CA3AF),
+                tint = if (isSelected) Color(0xFF7047EB) else Color(0xFF88849E),
                 modifier = Modifier.size(22.dp)
             )
         }
@@ -298,7 +310,7 @@ private fun BottomNavItem(
                 fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium,
                 fontSize = 11.sp
             ),
-            color = if (isSelected) Color(0xFF059669) else Color(0xFF9CA3AF)
+            color = if (isSelected) Color(0xFF7047EB) else Color(0xFF88849E)
         )
     }
 }

@@ -311,74 +311,84 @@ object SampleCampusData {
     fun getInitialStoreItems(): List<StoreItemEntity> {
         return listOf(
             StoreItemEntity(
-                id = "br_ink_black",
-                title = "Fine Ink Pen",
-                description = "Crisp, classic architectural black line with smooth tapering.",
+                id = "br_fine_ink",
+                title = "Fine ink pen",
+                description = "Crisp architectural line, smooth tapering.",
                 category = "OUTLINE",
                 costCoins = 0,
                 isUnlocked = true,
-                previewHex = "#1E2A24",
+                previewHex = "#1E293B",
                 styleKey = "INK"
             ),
             StoreItemEntity(
-                id = "br_cyber_glow",
-                title = "Cyber Neon Pulse",
-                description = "Electrifying glowing cyan/violet vector stroke for night routes.",
+                id = "br_cyber_neon",
+                title = "Cyber neon pulse",
+                description = "Glowing cyan-violet stroke for night routes.",
                 category = "OUTLINE",
-                costCoins = 250,
+                costCoins = 0,
                 isUnlocked = true,
-                previewHex = "#00F5D4",
+                previewHex = "#22D3EE",
                 styleKey = "NEON"
             ),
             StoreItemEntity(
-                id = "br_watercolor",
-                title = "Aquarelle Flow",
-                description = "Soft textured watercolor stroke that bleeds gently into the canvas.",
+                id = "br_aquarelle",
+                title = "Aquarelle flow",
+                description = "Soft watercolor stroke that bleeds gently.",
                 category = "OUTLINE",
                 costCoins = 300,
                 isUnlocked = false,
-                previewHex = "#7B2CBF",
+                previewHex = "#A78BFA",
                 styleKey = "WATERCOLOR"
             ),
             StoreItemEntity(
                 id = "br_chalk",
-                title = "Campus Chalk",
-                description = "Textured pavement chalk outline resembling campus graffiti art.",
+                title = "Campus chalk",
+                description = "Textured chalk outline, graffiti style.",
                 category = "OUTLINE",
                 costCoins = 200,
                 isUnlocked = false,
-                previewHex = "#F4A261",
+                previewHex = "#F59E0B",
                 styleKey = "CHALK"
             ),
             StoreItemEntity(
                 id = "pal_pastel_bloom",
-                title = "Pastel Bloom Palette",
-                description = "Soft mints, delicate lavenders, and honey peach highlights.",
+                title = "Pastel bloom",
+                description = "Mints, lavenders, honey peach.",
                 category = "PALETTE",
                 costCoins = 0,
                 isUnlocked = true,
-                previewHex = "#BCEAD5",
+                previewHex = "#D1FAE5",
                 styleKey = "PALETTE_PASTEL"
             ),
             StoreItemEntity(
-                id = "pal_sunset_glow",
-                title = "Golden Hour Dusk",
-                description = "Rich terracotta, warm saffron, and soothing twilight plum.",
+                id = "pal_sunset_bloom",
+                title = "Sunset bloom",
+                description = "Warm oranges into rosy pink.",
                 category = "PALETTE",
-                costCoins = 200,
-                isUnlocked = true,
-                previewHex = "#F4A261",
+                costCoins = 320,
+                isUnlocked = false,
+                previewHex = "#FB923C",
                 styleKey = "PALETTE_SUNSET"
             ),
             StoreItemEntity(
-                id = "pal_cyber_matrix",
-                title = "Tokyo Cyber Matrix",
-                description = "Futuristic electric greens, deep obsidian, and ultraviolet.",
+                id = "pal_ocean_drift",
+                title = "Ocean drift",
+                description = "Teal to deep navy blue.",
                 category = "PALETTE",
-                costCoins = 350,
+                costCoins = 280,
                 isUnlocked = false,
-                previewHex = "#00F5D4",
-                styleKey = "PALETTE_CYBER"
+                previewHex = "#38BDF8",
+                styleKey = "PALETTE_OCEAN"
+            ),
+            StoreItemEntity(
+                id = "pal_neon_grid",
+                title = "Neon grid",
+                description = "Electric pink, cyan and violet.",
+                category = "PALETTE",
+                costCoins = 450,
+                isUnlocked = false,
+                previewHex = "#EC4899",
+                styleKey = "PALETTE_NEON"
             )
         )
     }
@@ -387,39 +397,30 @@ object SampleCampusData {
         return listOf(
             CustomColorEntity(
                 id = 1,
-                name = "Sunset Hostel Gold",
-                hexCode = "#FFB703",
-                category = "Hostel Sunset",
-                redVal = 255,
-                greenVal = 183,
-                blueVal = 3
+                name = "Amber trail",
+                hexCode = "#F59E0B",
+                category = "Owned",
+                redVal = 245,
+                greenVal = 158,
+                blueVal = 11
             ),
             CustomColorEntity(
                 id = 2,
-                name = "Cyber Library Cyan",
-                hexCode = "#00F5D4",
-                category = "Neon Glow",
-                redVal = 0,
-                greenVal = 245,
+                name = "Coastal mist",
+                hexCode = "#06B6D4",
+                category = "Owned",
+                redVal = 6,
+                greenVal = 182,
                 blueVal = 212
             ),
             CustomColorEntity(
                 id = 3,
-                name = "Botanical Green",
-                hexCode = "#52B788",
-                category = "Campus Mixed",
-                redVal = 82,
-                greenVal = 183,
-                blueVal = 136
-            ),
-            CustomColorEntity(
-                id = 4,
-                name = "Lavender Lawn Mist",
-                hexCode = "#CDB4DB",
-                category = "Campus Mixed",
-                redVal = 205,
-                greenVal = 180,
-                blueVal = 219
+                name = "Dusk violet",
+                hexCode = "#8B5CF6",
+                category = "Owned",
+                redVal = 139,
+                greenVal = 92,
+                blueVal = 246
             )
         )
     }
