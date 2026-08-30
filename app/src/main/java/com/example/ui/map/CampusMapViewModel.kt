@@ -10,6 +10,7 @@ import com.example.data.model.WalkRouteEntity
 import com.example.data.repository.RouteRepository
 import com.example.service.LocationService
 import com.example.util.GpsDistanceCalculator
+import com.example.util.HapticFeedbackHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +25,9 @@ data class CoordinateWaypoint(
     val longitude: Double,
     val label: String = "Waypoint",
     val altitude: Double = 0.0,
+    val isReached: Boolean = false,
+    val reachedTimestamp: Long? = null,
+    val distanceMeters: Double? = null,
     val timestamp: Long = System.currentTimeMillis()
 )
 
@@ -42,7 +46,10 @@ data class CoordinateMapUiState(
     val isGridOverlayEnabled: Boolean = true,
     val showAddCoordinateDialog: Boolean = false,
     val selectedWaypoint: CoordinateWaypoint? = null,
-    val newlySavedRouteId: Long? = null
+    val newlySavedRouteId: Long? = null,
+    val isHapticsEnabled: Boolean = true,
+    val lastReachedWaypointMessage: String? = null,
+    val totalWaypointsReached: Int = 0
 )
 
 class CampusMapViewModel(application: Application) : AndroidViewModel(application) {
@@ -79,6 +86,29 @@ class CampusMapViewModel(application: Application) : AndroidViewModel(applicatio
                         current.totalDistanceMeters
                     }
 
+                    // Check proximity to active waypoints (within 25m)
+                    var newlyReachedName: String? = null
+                    var newlyReachedCount = 0
+                    val updatedWaypoints = current.waypoints.map { wp ->
+                        val dist = GpsDistanceCalculator.computeDistanceBetween(lat, lng, wp.latitude, wp.longitude)
+                        if (!wp.isReached && dist <= 25.0) {
+                            newlyReachedName = wp.label
+                            newlyReachedCount++
+                            wp.copy(isReached = true, reachedTimestamp = update.timestamp, distanceMeters = dist)
+                        } else {
+                            wp.copy(distanceMeters = dist)
+                        }
+                    }
+
+                    if (newlyReachedName != null && current.isHapticsEnabled) {
+                        HapticFeedbackHelper.vibrateWaypointReached(getApplication())
+                    }
+
+                    val totalReached = updatedWaypoints.count { it.isReached }
+                    if (totalReached > 0 && totalReached == updatedWaypoints.size && current.waypoints.any { !it.isReached } && current.isHapticsEnabled) {
+                        HapticFeedbackHelper.vibrateRouteCompleted(getApplication())
+                    }
+
                     current.copy(
                         currentLat = lat,
                         currentLng = lng,
@@ -86,10 +116,52 @@ class CampusMapViewModel(application: Application) : AndroidViewModel(applicatio
                         altitudeMeters = update.altitudeMeters,
                         speedKmh = update.currentSpeedKmh,
                         coordinates = updatedList,
-                        totalDistanceMeters = totalDist
+                        waypoints = updatedWaypoints,
+                        totalDistanceMeters = totalDist,
+                        lastReachedWaypointMessage = newlyReachedName?.let { "Arrived at $it! 🎯" } ?: current.lastReachedWaypointMessage,
+                        totalWaypointsReached = totalReached
                     )
                 }
             }
+        }
+    }
+
+    fun toggleHaptics() {
+        _uiState.update {
+            val newState = !it.isHapticsEnabled
+            if (newState) {
+                HapticFeedbackHelper.vibrateTick(getApplication())
+            }
+            it.copy(isHapticsEnabled = newState)
+        }
+    }
+
+    fun triggerTestHapticFeedback() {
+        HapticFeedbackHelper.vibrateWaypointReached(getApplication())
+        _uiState.update { it.copy(lastReachedWaypointMessage = "Vibration Test: Reached Waypoint! 📳") }
+    }
+
+    fun dismissReachedBanner() {
+        _uiState.update { it.copy(lastReachedWaypointMessage = null) }
+    }
+
+    fun reachWaypointManually(waypointId: String) {
+        _uiState.update { current ->
+            var targetName = "Waypoint"
+            val updated = current.waypoints.map { wp ->
+                if (wp.id == waypointId) {
+                    targetName = wp.label
+                    wp.copy(isReached = true, reachedTimestamp = System.currentTimeMillis())
+                } else wp
+            }
+            if (current.isHapticsEnabled) {
+                HapticFeedbackHelper.vibrateWaypointReached(getApplication())
+            }
+            current.copy(
+                waypoints = updated,
+                totalWaypointsReached = updated.count { it.isReached },
+                lastReachedWaypointMessage = "Arrived at $targetName! 🎯"
+            )
         }
     }
 

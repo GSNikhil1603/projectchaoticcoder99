@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.model.GpsCoordinate
@@ -288,7 +289,24 @@ fun CampusMapScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Add Coordinate Button
+                            // Haptic Vibration Feedback Toggle & Test Button
+                            IconButton(
+                                onClick = { viewModel.toggleHaptics() },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(if (uiState.isHapticsEnabled) Color(0xFFFEF3C7) else Color(0xFFF3F4F6))
+                                    .testTag("btn_toggle_haptics")
+                            ) {
+                                Icon(
+                                    imageVector = if (uiState.isHapticsEnabled) Icons.Default.Vibration else Icons.Default.VolumeOff,
+                                    contentDescription = "Haptic Vibration Feedback",
+                                    tint = if (uiState.isHapticsEnabled) Color(0xFFD97706) else Color(0xFF9CA3AF),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            // Add Coordinate / Waypoint Button
                             IconButton(
                                 onClick = { viewModel.openAddCoordinateDialog(true) },
                                 modifier = Modifier
@@ -562,6 +580,102 @@ fun CampusMapScreen(
                             radius = 4.dp.toPx(),
                             center = lastScreen
                         )
+
+                        // Draw Route Waypoints with Haptic Reached Indicators
+                        waypoints.forEach { wp ->
+                            val wpScreen = coordToScreen(wp.latitude, wp.longitude)
+                            if (wp.isReached) {
+                                // Reached Waypoint: Emerald glow + ring
+                                drawCircle(
+                                    color = Color(0xFF10B981).copy(alpha = 0.3f),
+                                    radius = 16.dp.toPx(),
+                                    center = wpScreen
+                                )
+                                drawCircle(
+                                    color = Color(0xFF10B981),
+                                    radius = 7.dp.toPx(),
+                                    center = wpScreen
+                                )
+                                drawCircle(
+                                    color = Color.White,
+                                    radius = 3.dp.toPx(),
+                                    center = wpScreen
+                                )
+                            } else {
+                                // Unreached Waypoint: Amber pulse
+                                drawCircle(
+                                    color = Color(0xFFF59E0B).copy(alpha = pulseAlpha * 0.5f),
+                                    radius = 18.dp.toPx(),
+                                    center = wpScreen
+                                )
+                                drawCircle(
+                                    color = Color(0xFFF59E0B),
+                                    radius = 8.dp.toPx(),
+                                    center = wpScreen
+                                )
+                                drawCircle(
+                                    color = Color(0xFF111827),
+                                    radius = 4.dp.toPx(),
+                                    center = wpScreen
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Waypoint Arrival Celebration Banner (Haptic notification)
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = uiState.lastReachedWaypointMessage != null,
+                    enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp)
+                        .padding(horizontal = 20.dp)
+                        .zIndex(20f)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color(0xFF10B981),
+                        shadowElevation = 6.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Vibration,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = uiState.lastReachedWaypointMessage ?: "Waypoint Reached!",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp
+                                    ),
+                                    color = Color.White
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel.dismissReachedBanner() },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Dismiss",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -703,6 +817,118 @@ fun CampusMapScreen(
                                 color = Color(0xFF9CA3AF),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
+                        }
+                    }
+                }
+            }
+
+            // Waypoints Status Panel
+            if (uiState.waypoints.isNotEmpty()) {
+                Surface(
+                    color = Color(0xFFF9FAFB),
+                    border = BorderStroke(1.dp, Color(0xFFE5E7EB)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val reachedCount = uiState.waypoints.count { it.isReached }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "🎯 Campus Waypoints",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = Color(0xFF111827)
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (reachedCount == uiState.waypoints.size) Color(0xFFECFDF5) else Color(0xFFEFF6FF)
+                                ) {
+                                    Text(
+                                        text = "$reachedCount / ${uiState.waypoints.size} Reached",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 11.sp
+                                        ),
+                                        color = if (reachedCount == uiState.waypoints.size) Color(0xFF059669) else Color(0xFF2563EB),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+
+                            // Test Haptic Button
+                            TextButton(
+                                onClick = { viewModel.triggerTestHapticFeedback() },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(Icons.Default.Vibration, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFD97706))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Test Haptics", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD97706))
+                            }
+                        }
+
+                        // Waypoints Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.waypoints.forEach { wp ->
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (wp.isReached) Color(0xFFECFDF5) else Color.White,
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (wp.isReached) Color(0xFF10B981) else Color(0xFFD1D5DB)
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable {
+                                            if (!wp.isReached) {
+                                                // Test reaching this waypoint manually
+                                                viewModel.triggerTestHapticFeedback()
+                                            }
+                                        }
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (wp.isReached) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                                            contentDescription = null,
+                                            tint = if (wp.isReached) Color(0xFF10B981) else Color(0xFF9CA3AF),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Column {
+                                            Text(
+                                                text = wp.label,
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 11.sp
+                                                ),
+                                                color = if (wp.isReached) Color(0xFF065F46) else Color(0xFF374151),
+                                                maxLines = 1
+                                            )
+                                            Text(
+                                                text = if (wp.isReached) "Reached ✓" else "25m trigger",
+                                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
+                                                color = if (wp.isReached) Color(0xFF059669) else Color(0xFF9CA3AF)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
