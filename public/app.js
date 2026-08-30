@@ -2,7 +2,7 @@
  * Campus Route-to-Art — Core Client Application Engine
  * Implements Catmull-Rom to Cubic Bézier Splines, RDP Simplification,
  * Organic Watercolor Blobs, Live GPS Tracker & Simulator, Coloring Studio,
- * Campus Map, Quests, Store, and Local Storage Persistence.
+ * Campus Map, Store, and Local Storage Persistence.
  */
 
 // ==========================================
@@ -272,15 +272,6 @@ const SampleCampusData = {
     return list;
   },
 
-  getInitialQuests() {
-    return [
-      { id: "q1", title: "Campus 8,000 Step Stride", desc: "Walk at least 8,000 steps today across campus lecture halls.", cat: "Daily", target: 8000, current: 7842, reward: 100, icon: "👟", completed: false, claimed: false },
-      { id: "q2", title: "Closed Loop Artist", desc: "Walk a full loop that connects back to create a closed artwork zone.", cat: "Daily", target: 1, current: 1, reward: 150, icon: "🎨", completed: true, claimed: false },
-      { id: "q3", title: "Hostel Derby: 25 km", desc: "Accumulate 25 km of campus walking to boost your block's ranking.", cat: "Weekly", target: 25, current: 18.5, reward: 350, icon: "🏆", completed: false, claimed: false },
-      { id: "q4", title: "Campus Pioneer", desc: "Visit 4 distinct campus zones (Library, SJT, Food Court, Lake).", cat: "Special", target: 4, current: 4, reward: 250, icon: "🗺️", completed: true, claimed: true }
-    ];
-  },
-
   getInitialLeaderboard() {
     return [
       { rank: 1, name: "Aarav Sharma", avatar: "🥇", km: "64.2 km", crystals: "2,450 💎", isUser: false },
@@ -333,7 +324,6 @@ const SampleCampusData = {
 class CampusRouteArtApp {
   constructor() {
     this.routes = this.loadStoredData("cra_routes", SampleCampusData.getInitialRoutes());
-    this.quests = this.loadStoredData("cra_quests", SampleCampusData.getInitialQuests());
     this.storeItems = this.loadStoredData("cra_store", SampleCampusData.getInitialStoreItems());
     this.badges = this.loadStoredData("cra_badges", SampleCampusData.getInitialBadges());
     this.leaderboard = SampleCampusData.getInitialLeaderboard();
@@ -460,9 +450,6 @@ class CampusRouteArtApp {
     // Map Events
     this.bindMapEvents();
 
-    // Quests Events
-    this.bindQuestEvents();
-
     // Store Events
     this.bindStoreEvents();
 
@@ -514,7 +501,6 @@ class CampusRouteArtApp {
     this.renderHomeCarousel();
     this.renderStudioView();
     this.renderCampusMap();
-    this.renderQuests("ALL");
     this.renderLeaderboard();
     this.renderStore("BRUSH");
     this.renderProfile();
@@ -1076,14 +1062,6 @@ class CampusRouteArtApp {
     this.crystals += earnedCrystals;
     this.updateCrystalDisplays();
 
-    // Check Quests progress
-    this.quests.forEach(q => {
-      if (q.id === "q1") q.current = Math.min(q.target, q.current + newRoute.steps);
-      if (q.id === "q3") q.current = Math.min(q.target, q.current + newRoute.distanceKm);
-      if (q.current >= q.target) q.completed = true;
-    });
-    this.saveData("cra_quests", this.quests);
-
     this.showToast(`🎉 Masterpiece minted! +${earnedCrystals} 💎 crystals earned!`, "💎");
     this.resetTrackerState();
     this.openInStudio(newRoute);
@@ -1172,73 +1150,11 @@ class CampusRouteArtApp {
   }
 
   // ==========================================
-  // 7. QUESTS & LEADERBOARD LOGIC
+  // 7. LEADERBOARD LOGIC
   // ==========================================
-  bindQuestEvents() {
-    const questTabs = document.querySelectorAll(".quest-tab-btn");
-    questTabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        questTabs.forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        this.renderQuests(tab.getAttribute("data-quest-cat"));
-      });
-    });
-  }
-
-  renderQuests(filterCategory = "ALL") {
-    const listContainer = document.getElementById("quests-list-container");
-    listContainer.innerHTML = "";
-
-    const filtered = filterCategory === "ALL" ? this.quests : this.quests.filter(q => q.cat === filterCategory);
-
-    filtered.forEach(q => {
-      const card = document.createElement("div");
-      card.className = "quest-card";
-      const progressFraction = Math.min(1, q.current / q.target);
-      const progressPercent = Math.round(progressFraction * 100);
-
-      card.innerHTML = `
-        <div class="quest-card-top">
-          <div class="quest-info-group">
-            <span class="quest-icon">${q.icon}</span>
-            <div>
-              <div class="quest-title">${q.title}</div>
-              <div class="quest-desc">${q.desc}</div>
-            </div>
-          </div>
-          <span class="quest-reward-chip">+${q.reward} 💎</span>
-        </div>
-        <div class="quest-progress-bar-wrap">
-          <div class="quest-progress-track">
-            <div class="quest-progress-fill" style="width:${progressPercent}%"></div>
-          </div>
-        </div>
-        <div class="quest-card-footer">
-          <span class="quest-progress-text">${q.current} / ${q.target} (${progressPercent}%)</span>
-          <button class="btn-claim-reward ${q.claimed ? 'claimed' : ''}" ${q.completed && !q.claimed ? '' : 'disabled'}>
-            ${q.claimed ? 'Claimed ✓' : (q.completed ? 'Claim Reward 🎁' : 'In Progress')}
-          </button>
-        </div>
-      `;
-
-      const claimBtn = card.querySelector(".btn-claim-reward");
-      if (claimBtn && q.completed && !q.claimed) {
-        claimBtn.addEventListener("click", () => {
-          q.claimed = true;
-          this.crystals += q.reward;
-          this.saveData("cra_quests", this.quests);
-          this.updateCrystalDisplays();
-          this.renderQuests(filterCategory);
-          this.showToast(`Claimed +${q.reward} Crystals!`, "🎁");
-        });
-      }
-
-      listContainer.appendChild(card);
-    });
-  }
-
   renderLeaderboard() {
     const rowsContainer = document.getElementById("leaderboard-rows-container");
+    if (!rowsContainer) return;
     rowsContainer.innerHTML = "";
 
     this.leaderboard.forEach(item => {
@@ -1273,6 +1189,7 @@ class CampusRouteArtApp {
 
   renderStore(category = "BRUSH") {
     const container = document.getElementById("store-items-grid-container");
+    if (!container) return;
     container.innerHTML = "";
 
     const items = this.storeItems.filter(i => i.cat === category);
@@ -1331,27 +1248,30 @@ class CampusRouteArtApp {
   renderProfile() {
     // Badges
     const badgesContainer = document.getElementById("profile-badges-container");
-    badgesContainer.innerHTML = "";
-
-    this.badges.forEach(b => {
-      const card = document.createElement("div");
-      card.className = `badge-item-card ${b.unlocked ? '' : 'locked'}`;
-      card.innerHTML = `
-        <span class="badge-emoji">${b.emoji}</span>
-        <span class="badge-name">${b.name}</span>
-        <span class="badge-rarity">${b.rarity}</span>
-      `;
-      card.addEventListener("click", () => {
-        this.showModal(`${b.emoji} ${b.name} (${b.rarity})`, `<p style="font-size:14px;color:#374151;">${b.desc}</p><p style="margin-top:8px;font-weight:700;color:${b.unlocked ? '#059669' : '#DC2626'}">${b.unlocked ? '✓ Unlocked' : '🔒 Locked'}</p>`);
+    if (badgesContainer) {
+      badgesContainer.innerHTML = "";
+      this.badges.forEach(b => {
+        const card = document.createElement("div");
+        card.className = `badge-item-card ${b.unlocked ? '' : 'locked'}`;
+        card.innerHTML = `
+          <span class="badge-emoji">${b.emoji}</span>
+          <span class="badge-name">${b.name}</span>
+          <span class="badge-rarity">${b.rarity}</span>
+        `;
+        card.addEventListener("click", () => {
+          this.showModal(`${b.emoji} ${b.name} (${b.rarity})`, `<p style="font-size:14px;color:#374151;">${b.desc}</p><p style="margin-top:8px;font-weight:700;color:${b.unlocked ? '#059669' : '#DC2626'}">${b.unlocked ? '✓ Unlocked' : '🔒 Locked'}</p>`);
+        });
+        badgesContainer.appendChild(card);
       });
-      badgesContainer.appendChild(card);
-    });
+    }
 
+    this.renderLeaderboard();
     this.renderProfileGallery("ALL");
   }
 
   renderProfileGallery(filter = "ALL") {
     const grid = document.getElementById("profile-artworks-grid");
+    if (!grid) return;
     grid.innerHTML = "";
 
     let list = this.routes;

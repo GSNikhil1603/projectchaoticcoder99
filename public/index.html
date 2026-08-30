@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Campus Route-to-Art | Generative GPS Walk Art</title>
-  <meta name="description" content="Gamify your daily campus walks by converting GPS routes into collectible generative digital artwork with interactive watercolor styling, campus maps, quests, and rewards.">
+  <meta name="description" content="Gamify your daily campus walks by converting GPS routes into collectible generative digital artwork with interactive watercolor styling, campus maps, and rewards.">
   <meta name="theme-color" content="#52B788">
 
   <!-- Modern Google Fonts -->
@@ -484,45 +484,7 @@
         </div>
       </section>
 
-      <!-- ================= 5. QUESTS & LEADERBOARD VIEW ================= -->
-      <section id="view-quests" class="app-view">
-        <div class="view-header">
-          <h2 class="view-title">Quests & Leaderboard</h2>
-          <p class="view-description">Complete daily walking challenges, climb the campus leaderboard, and earn pigment crystals.</p>
-        </div>
-
-        <!-- Quests & Challenges List -->
-        <div class="quests-container">
-          <div class="quest-tabs-header">
-            <button class="quest-tab-btn active" data-quest-cat="ALL">All Quests</button>
-            <button class="quest-tab-btn" data-quest-cat="Daily">Daily</button>
-            <button class="quest-tab-btn" data-quest-cat="Weekly">Weekly</button>
-            <button class="quest-tab-btn" data-quest-cat="Special">Special</button>
-          </div>
-
-          <div class="quest-cards-list" id="quests-list-container">
-            <!-- Injected via JS -->
-          </div>
-        </div>
-
-        <!-- Campus Student Leaderboard -->
-        <div class="leaderboard-section">
-          <h3 class="section-title">Campus Walking Leaderboard</h3>
-          <div class="leaderboard-card">
-            <div class="leaderboard-table-header">
-              <span>RANK</span>
-              <span>STUDENT</span>
-              <span>DISTANCE</span>
-              <span>CRYSTALS</span>
-            </div>
-            <div class="leaderboard-rows" id="leaderboard-rows-container">
-              <!-- Injected via JS -->
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= 6. PIGMENT LAB & STORE VIEW ================= -->
+      <!-- ================= 5. PIGMENT LAB & STORE VIEW ================= -->
       <section id="view-store" class="app-view">
         <div class="view-header">
           <div class="store-wallet-header">
@@ -553,7 +515,7 @@
         </div>
       </section>
 
-      <!-- ================= 7. PROFILE & ARTWORKS VIEW ================= -->
+      <!-- ================= 6. PROFILE & ARTWORKS VIEW ================= -->
       <section id="view-profile" class="app-view">
         <div class="profile-hero-card">
           <div class="profile-avatar-large">
@@ -591,8 +553,24 @@
           </div>
         </div>
 
+        <!-- Campus Student Leaderboard -->
+        <div class="leaderboard-section" style="margin-top: 14px;">
+          <h3 class="section-title">Campus Walking Leaderboard</h3>
+          <div class="leaderboard-card" style="margin-top: 8px;">
+            <div class="leaderboard-table-header">
+              <span>RANK</span>
+              <span>STUDENT</span>
+              <span>DISTANCE</span>
+              <span>CRYSTALS</span>
+            </div>
+            <div class="leaderboard-rows" id="leaderboard-rows-container">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+        </div>
+
         <!-- Complete Artworks Gallery -->
-        <div class="profile-gallery-section">
+        <div class="profile-gallery-section" style="margin-top: 14px;">
           <div class="gallery-filter-row">
             <h3 class="section-title">My Art Collection</h3>
             <div class="gallery-category-chips">
@@ -612,7 +590,7 @@
 
     </main>
 
-    <!-- Bottom Mobile Navigation Bar -->
+    <!-- Bottom Mobile Navigation Bar (5 tabs) -->
     <nav class="bottom-nav-bar" id="bottom-nav">
       <button class="nav-item active" data-target-view="view-home" id="nav-btn-home">
         <div class="nav-icon-box">
@@ -655,22 +633,6 @@
           </svg>
         </div>
         <span class="nav-label">Map</span>
-      </button>
-
-      <button class="nav-item" data-target-view="view-quests" id="nav-btn-quests">
-        <div class="nav-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-            <path d="M4 22h16"></path>
-            <path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"></path>
-            <path d="M18 14.66V17c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1v-2.34"></path>
-            <path d="M14 2v4"></path>
-            <path d="M10 2v4"></path>
-            <path d="M6 6h12a2 2 0 0 1 2 2v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8a2 2 0 0 1 2-2z"></path>
-          </svg>
-        </div>
-        <span class="nav-label">Quests</span>
       </button>
 
       <button class="nav-item" data-target-view="view-store" id="nav-btn-store">
