@@ -48,6 +48,10 @@
             android:exported="false"
             android:foregroundServiceType="health|dataSync" />
 
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyYourActualKeyHere" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
