@@ -63,11 +63,12 @@ fun HomeScreen(
 
     val currentCheer = CHEER_QUOTES[cheerIndex % CHEER_QUOTES.size]
 
-    // Steps, distance, and calories (fallback to exact mockup values if fresh)
-    val todaySteps = uiState.todaysRoute?.steps ?: 7842
-    val todayDistance = uiState.todaysRoute?.distanceKm ?: 5.6
-    val todayCalories = uiState.todaysRoute?.calories ?: 312
-    val goalSteps = 10000
+    // Steps, distance, and calories (combines live hardware pedometer sensor with stored history)
+    val liveSensorSteps = uiState.pedometerState.dailySteps
+    val todaySteps = if (liveSensorSteps > 0) liveSensorSteps else (uiState.todaysRoute?.steps ?: 7842)
+    val todayDistance = if (liveSensorSteps > 0) uiState.pedometerState.distanceKm else (uiState.todaysRoute?.distanceKm ?: 5.6)
+    val todayCalories = if (liveSensorSteps > 0) uiState.pedometerState.caloriesBurned else (uiState.todaysRoute?.calories ?: 312)
+    val goalSteps = uiState.pedometerState.dailyGoalSteps
     val goalFraction = (todaySteps.toFloat() / goalSteps.toFloat()).coerceIn(0f, 1f)
     val goalPercent = (goalFraction * 100).toInt()
 
@@ -632,7 +633,228 @@ fun HomeScreen(
                 }
             }
 
-            // 5. Subtle Footer Prompt Note
+            // 5. Live Campus Pedometer & Hardware Step Counter Sensor Card
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, Color(0xFFE5E7EB)),
+                shadowElevation = 1.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("campus_pedometer_card")
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Header Row: Pedometer Title & Live Sensor Badge
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0xFFECFDF5),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.DirectionsWalk,
+                                        contentDescription = null,
+                                        tint = Color(0xFF059669),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = "Campus Pedometer",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    ),
+                                    color = Color(0xFF111827)
+                                )
+                                Text(
+                                    text = uiState.pedometerState.sensorType,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Normal
+                                    ),
+                                    color = Color(0xFF6B7280)
+                                )
+                            }
+                        }
+
+                        // Live Pulse Status Badge
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (uiState.pedometerState.isTracking) Color(0xFFECFDF5) else Color(0xFFF3F4F6)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .clip(CircleShape)
+                                        .background(if (uiState.pedometerState.isTracking) Color(0xFF10B981) else Color(0xFF9CA3AF))
+                                )
+                                Text(
+                                    text = if (uiState.pedometerState.isTracking) "Live Active" else "Ready",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp
+                                    ),
+                                    color = if (uiState.pedometerState.isTracking) Color(0xFF065F46) else Color(0xFF6B7280)
+                                )
+                            }
+                        }
+                    }
+
+                    // 3 Metric Blocks: Live Daily Steps, Cadence (SPM), Active Time
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Metric 1: Steps
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFFF9FAFB),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = "Daily Steps",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                                    color = Color(0xFF6B7280)
+                                )
+                                Text(
+                                    text = String.format("%,d", todaySteps),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 16.sp
+                                    ),
+                                    color = Color(0xFF111827)
+                                )
+                            }
+                        }
+
+                        // Metric 2: Cadence
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFFF9FAFB),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = "Cadence",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                                    color = Color(0xFF6B7280)
+                                )
+                                Text(
+                                    text = "${uiState.pedometerState.cadenceSpm} SPM",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 16.sp
+                                    ),
+                                    color = Color(0xFF0D9488)
+                                )
+                            }
+                        }
+
+                        // Metric 3: Active Walk
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFFF9FAFB),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = "Active Time",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                                    color = Color(0xFF6B7280)
+                                )
+                                Text(
+                                    text = "${uiState.pedometerState.activeMinutes} min",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 16.sp
+                                    ),
+                                    color = Color(0xFF7C3AED)
+                                )
+                            }
+                        }
+                    }
+
+                    // Interactive Action Strip: Add +250 Steps (Test/Calibrate) + Start Walk Button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Quick Add +250 steps button
+                        OutlinedButton(
+                            onClick = { viewModel.simulateWalkSteps(250) },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("+250 Steps", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        // Reset Day Steps Button
+                        OutlinedButton(
+                            onClick = { viewModel.resetDailySteps() },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Reset Daily Steps",
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+
+                        // Start GPS & Art Tracker Button
+                        Button(
+                            onClick = { onNavigateToTracker() },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+                            modifier = Modifier.weight(1.1f),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                        ) {
+                            Text("Track Walk", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            // 6. Subtle Footer Prompt Note
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

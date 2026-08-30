@@ -89,6 +89,7 @@ class LocationService : Service() {
     private var elevationGainAccumulated = 0.0
     private var currentGradePercentage = 0.0
     private var currentStrokeMultiplier = 1.0f
+    private var sessionStartSensorSteps = 0
     private var isPaused = false
 
     companion object {
@@ -288,7 +289,17 @@ class LocationService : Service() {
         )
 
         val speedKmh = if (location.hasSpeed()) (location.speed * 3.6) else 0.0
-        val estimatedSteps = (totalDistanceAccumulated / 0.72).roundToInt()
+        val currentPedometerSteps = PedometerService.pedometerState.value.dailySteps
+        val sensorStepsDelta = if (currentPedometerSteps >= sessionStartSensorSteps) {
+            currentPedometerSteps - sessionStartSensorSteps
+        } else {
+            0
+        }
+        val estimatedSteps = if (sensorStepsDelta > 0) {
+            sensorStepsDelta
+        } else {
+            (totalDistanceAccumulated / 0.72).roundToInt()
+        }
         val km = Math.round((totalDistanceAccumulated / 1000.0) * 100.0) / 100.0
         val formattedTime = formatDuration(sessionDurationSeconds)
 
@@ -352,6 +363,8 @@ class LocationService : Service() {
 
     @SuppressLint("MissingPermission")
     private fun startForegroundTracking() {
+        PedometerService.start(this)
+        sessionStartSensorSteps = PedometerService.pedometerState.value.dailySteps
         sessionDurationSeconds = 0
         totalDistanceAccumulated = 0.0
         previousLocation = null
